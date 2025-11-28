@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   AppBar,
   Toolbar,
@@ -9,13 +9,13 @@ import {
   Typography,
   Menu,
   Button,
-  Select,
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import logo from "../assets/logo.jpg";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTheme } from "@mui/material/styles";
+import { auth } from "../services/Firebase/Firebase";
 
 // Submenu for Rooms
 const roomsSubMenu = [
@@ -38,7 +38,7 @@ const NavItem = ({ to, children, selected, theme }) => (
     component={Link}
     to={to}
     sx={{
-      color: theme.palette.primary.contrastText, // text color from theme
+      color: theme.palette.primary.contrastText,
       textDecoration: "none",
       fontSize: "16px",
       pb: 0.5,
@@ -47,7 +47,7 @@ const NavItem = ({ to, children, selected, theme }) => (
         : `2px solid transparent`,
       ":hover": {
         borderBottom: `2px solid ${theme.palette.secondary.main}`,
-        color: theme.palette.primary.contrastText, // keep text color
+        color: theme.palette.primary.contrastText,
       },
       transition: "border-bottom 0.3s ease",
     }}
@@ -119,11 +119,30 @@ const Dropdown = ({ selected, theme }) => {
 };
 
 const Navbar = ({ mobileOpen, setMobileOpen }) => {
-  const [language, setLanguage] = useState("en");
+  const [userName, setUserName] = useState(null);
   const location = useLocation();
   const theme = useTheme();
+  const navigate = useNavigate();
+
+  useEffect(() => {
+    const token = localStorage.getItem("userToken");
+    const name = localStorage.getItem("userName");
+    if (token && name) {
+      setUserName(name);
+    } else {
+      setUserName(null);
+    }
+  }, [location.pathname]);
 
   const isSelected = (path) => location.pathname === path;
+
+  const handleLogout = () => {
+    auth.signOut();
+    localStorage.removeItem("userToken");
+    localStorage.removeItem("userName");
+    setUserName(null);
+    navigate("/");
+  };
 
   return (
     <AppBar
@@ -143,16 +162,13 @@ const Navbar = ({ mobileOpen, setMobileOpen }) => {
         }}
       >
         {/* Left: Logo + Nav */}
-        <Box
-          sx={{ display: "flex", alignItems: "center", gap: { xs: 0, md: 5 } }}
-        >
+        <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 0, md: 5 } }}>
           <Box
             component="img"
             src={logo}
             alt="logo"
             sx={{ height: { xs: 60, md: 130 }, width: "auto", mt: 1 }}
           />
-
           <Box sx={{ display: { xs: "none", md: "flex" }, gap: 5, pl: 4 }}>
             <NavItem to="/" selected={isSelected("/")} theme={theme}>
               Home
@@ -185,44 +201,56 @@ const Navbar = ({ mobileOpen, setMobileOpen }) => {
           </Box>
         </Box>
 
-        {/* Right: Language + Mobile */}
-        {/* Right: Sign In / Sign Up + Mobile */}
+        {/* Right: User Info or Sign In/Up */}
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <Box sx={{ display: { xs: "none", md: "flex" }, gap: 2 }}>
-            <Button
-              component={Link}
-              to="/signin"
-              sx={{
-                color: theme.palette.primary.contrastText,
-                border: `1px solid ${theme.palette.primary.contrastText}`,
-                textTransform: "none",
-                px: 2,
-                py: 0.5,
-                fontWeight: "bold",
-              }}
-            >
-              Sign In
-            </Button>
-
-            <Button
-              component={Link}
-              to="/signup"
-              sx={{
-                color: theme.palette.primary.main,
-                backgroundColor: theme.palette.primary.contrastText,
-                textTransform: "none",
-                px: 2,
-                py: 0.5,
-                fontWeight: "bold",
-                ":hover": {
-                  backgroundColor: theme.palette.grey[300],
-                },
-              }}
-            >
-              Sign Up
-            </Button>
+            {userName ? (
+              <Button
+                sx={{
+                  color: theme.palette.primary.contrastText,
+                  textTransform: "none",
+                  fontWeight: "bold",
+                }}
+                onClick={handleLogout}
+              >
+                {userName} 🔒
+              </Button>
+            ) : (
+              <>
+                <Button
+                  component={Link}
+                  to="/signin"
+                  sx={{
+                    color: theme.palette.primary.contrastText,
+                    border: `1px solid ${theme.palette.primary.contrastText}`,
+                    textTransform: "none",
+                    px: 2,
+                    py: 0.5,
+                    fontWeight: "bold",
+                  }}
+                >
+                  Sign In
+                </Button>
+                <Button
+                  component={Link}
+                  to="/signup"
+                  sx={{
+                    color: theme.palette.primary.main,
+                    backgroundColor: theme.palette.primary.contrastText,
+                    textTransform: "none",
+                    px: 2,
+                    py: 0.5,
+                    fontWeight: "bold",
+                    ":hover": { backgroundColor: theme.palette.grey[300] },
+                  }}
+                >
+                  Sign Up
+                </Button>
+              </>
+            )}
           </Box>
 
+          {/* Mobile Menu */}
           <IconButton
             sx={{ display: { xs: "block", md: "none" } }}
             onClick={() => setMobileOpen(true)}
@@ -256,12 +284,26 @@ const Navbar = ({ mobileOpen, setMobileOpen }) => {
             <MobileNavItem to="/contact" setMobileOpen={setMobileOpen}>
               Contact
             </MobileNavItem>
-            <MobileNavItem to="/signin" setMobileOpen={setMobileOpen}>
-              Sign In
-            </MobileNavItem>
-            <MobileNavItem to="/signup" setMobileOpen={setMobileOpen}>
-              Sign Up
-            </MobileNavItem>
+            {userName ? (
+              <MobileNavItem
+                to="/"
+                setMobileOpen={() => {
+                  handleLogout();
+                  setMobileOpen(false);
+                }}
+              >
+                Logout
+              </MobileNavItem>
+            ) : (
+              <>
+                <MobileNavItem to="/signin" setMobileOpen={setMobileOpen}>
+                  Sign In
+                </MobileNavItem>
+                <MobileNavItem to="/signup" setMobileOpen={setMobileOpen}>
+                  Sign Up
+                </MobileNavItem>
+              </>
+            )}
           </Box>
         </Drawer>
       </Toolbar>

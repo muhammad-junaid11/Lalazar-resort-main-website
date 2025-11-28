@@ -10,6 +10,7 @@ const TextFieldInput = ({
   fullWidth = true,
   rules = {},
   sx = {},
+  autoComplete,
   ...rest
 }) => {
   return (
@@ -20,6 +21,7 @@ const TextFieldInput = ({
       render={({ field, fieldState: { error } }) => (
         <TextField
           {...field}
+          value={field.value ?? ""}  // ⭐ Important fix
           label={label}
           placeholder={placeholder}
           fullWidth={fullWidth}
@@ -27,6 +29,7 @@ const TextFieldInput = ({
           error={!!error}
           helperText={error ? error.message : ""}
           sx={sx}
+          autoComplete={autoComplete}
           {...rest}
         />
       )}

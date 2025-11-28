@@ -1,10 +1,19 @@
-// /src/components/form/DatePickerInput.jsx
 import React from "react";
 import { Controller } from "react-hook-form";
-import { TextField } from "@mui/material";
+import { TextField, useTheme } from "@mui/material";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
 
-const DatePickerInput = ({ name, control, label, rules = {}, sx = {}, fullWidth = true, ...rest }) => {
+const DatePickerInput = ({ 
+  name, 
+  control, 
+  label, 
+  rules = {}, 
+  sx = {}, 
+  fullWidth = true, 
+  ...rest 
+}) => {
+  const theme = useTheme();
+
   return (
     <Controller
       name={name}
@@ -14,19 +23,39 @@ const DatePickerInput = ({ name, control, label, rules = {}, sx = {}, fullWidth 
         <DatePicker
           {...field}
           label={label}
-          inputFormat="dd/MM/yyyy"
           onChange={(date) => field.onChange(date)}
-          renderInput={(params) => (
-            <TextField
-              {...params}
-              fullWidth={fullWidth}
-              size="small"
-              error={!!error}
-              helperText={error ? error.message : ""}
-              sx={sx}
-              {...rest}
-            />
-          )}
+          enableAccessibleFieldDOMStructure={false} // <-- important fix for MUI X v6+
+          slots={{
+            textField: TextField,
+          }}
+          slotProps={{
+            textField: {
+              fullWidth: fullWidth,
+              error: !!error,
+              helperText: error?.message,
+              sx: sx,
+              ...rest,
+            },
+            openPickerButton: {
+              sx: { 
+                color: theme.palette.secondary.main,
+              },
+            },
+            day: {
+              sx: {
+                '&.Mui-selected': {
+                  backgroundColor: `${theme.palette.secondary.main} !important`,
+                  color: '#fff',
+                  '&:hover': {
+                    backgroundColor: `${theme.palette.secondary.dark} !important`,
+                  },
+                  '&:focus': {
+                    backgroundColor: `${theme.palette.secondary.main} !important`,
+                  },
+                },
+              },
+            },
+          }}
         />
       )}
     />
