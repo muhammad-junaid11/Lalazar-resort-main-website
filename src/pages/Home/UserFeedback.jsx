@@ -44,12 +44,12 @@ const UserFeedback = () => {
         <Typography
           variant="h2"
           component="h1"
-          sx={{
-                fontWeight: 600,
+           sx={{
+            fontWeight: 700,
             mb: 2,
-            fontFamily: 'serif',
+            fontFamily: '"Georgia",serif',
             color: theme.palette.secondary.main,
-            fontSize: { xs: '2.5rem', md: '4rem' },
+            fontSize: { xs: '2.5rem',sm:'3rem', md: '3.5rem' },
           }}
         >
           User Feedback

@@ -11,12 +11,12 @@ import {
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../../services/Firebase/Firebase";
 
-import deluxe from '../../assets/deluxe.jpg';
-import family from '../../assets/family.jpg';
-import luxury from '../../assets/luxury.jpg';
-import executive from '../../assets/executive.jpg';
-import activities from '../../assets/activities.jpg';
-import contactBg from '../../assets/ContactBg.jpg';
+import deluxe from '../../assets/deluxe.webp';
+import family from '../../assets/family.webp';
+import luxury from '../../assets/luxury.webp';
+import executive from '../../assets/executive.webp';
+import activities from '../../assets/img2.webp';
+import contactBg from '../../assets/activities.webp';
 
 // Map DB names → images
 const imageMap = {
@@ -47,8 +47,7 @@ const RoomCard = ({ name, imageSrc }) => (
   <Box
     sx={{
       position: 'relative',
-      height: '100%',
-      minHeight: '200px',
+      height: '500px', // FIXED HEIGHT
       overflow: 'hidden',
       borderRadius: '4px',
       '&:hover .overlay': { backgroundColor: 'rgba(0,0,0,0.4)' },
@@ -70,7 +69,7 @@ const RoomCard = ({ name, imageSrc }) => (
         display: 'flex',
         flexDirection: 'column',
         justifyContent: 'flex-end',
-        padding: 1.5,
+        padding: 2,
       }}
     >
       <Typography variant="h6" sx={{ color: 'white', fontWeight: 600, mb: 1, fontFamily: 'serif' }}>
@@ -80,15 +79,15 @@ const RoomCard = ({ name, imageSrc }) => (
       <Button
         variant="contained"
         color="secondary"
-        size="small"
         sx={{
           width: '100%',
-          maxWidth: '140px',
+          maxWidth: '180px',
           textTransform: 'none',
           fontWeight: 600,
-          borderRadius: '2px',
-          mt: 0.5,
-          fontSize: '0.8rem',
+          borderRadius: '4px',
+          mt: 1,
+          padding: '12px 18px', // bigger padding
+          fontSize: '1rem', // bigger text
         }}
       >
         Select This Room
@@ -102,8 +101,7 @@ const BottomSection = () => (
   <Box
     sx={{
       position: 'relative',
-      height: '100%',
-      minHeight: '200px',
+      height: '500px', // same as RoomCard
       overflow: 'hidden',
       borderRadius: '4px',
       cursor: 'pointer',
@@ -122,9 +120,9 @@ const BottomSection = () => (
         height: '100%',
         display: 'flex',
         flexDirection: 'column',
-        justifyContent: 'center',
+        justifyContent: 'flex-end',
         alignItems: 'flex-start',
-        padding: 1.5,
+        padding: 2,
         background:
           'linear-gradient(to top, rgba(0,0,0,0.7) 0%, rgba(0,0,0,0) 70%)',
         transition: 'background-color 0.3s ease',
@@ -137,6 +135,7 @@ const BottomSection = () => (
           fontWeight: 600,
           fontFamily: 'serif',
           textShadow: '1px 1px 3px rgba(0,0,0,0.9)',
+          fontSize: '1.2rem',
         }}
       >
         Other Activities
@@ -153,7 +152,7 @@ const ContactBanner = () => {
     <Box
       sx={{
         width: '100%',
-        height: '150px',
+        height: '250px', // bigger banner
         mt: 1,
         position: 'relative',
         overflow: 'hidden',
@@ -169,20 +168,38 @@ const ContactBanner = () => {
           left: 0,
           width: '100%',
           height: '100%',
-          backgroundColor: 'rgba(0,0,0,0.5)',
+          backgroundColor: 'rgba(0,0,0,0.8)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: { xs: 1, md: 2 },
+          padding: { xs: 2, md: 4 },
           flexDirection: { xs: 'column', sm: 'row' },
           textAlign: { xs: 'center', sm: 'left' },
+          '&:hover': {
+      backgroundColor: 'rgba(0,0,0,0.9)', // slightly darker on hover
+    },
         }}
       >
-        <Typography sx={{ color: 'white', fontWeight: 700, fontFamily: 'serif', fontSize: '1rem' }}>
-          Contact us now! **0332 8888489**
+        <Typography
+          sx={{
+            color: 'white',
+            fontWeight: 700,
+            fontFamily: 'serif',
+            fontSize: { xs: '1.5rem', sm: '2rem' },
+          }}
+        >
+          Contact us now! <br/> <Box component="span" sx={{ fontSize: '1.3em' }}>0332 8888489</Box>
         </Typography>
 
-        <Button variant="contained" color="secondary" size="small" sx={{ minWidth: '100px' }}>
+        <Button
+          variant="contained"
+          color="secondary"
+          sx={{
+            minWidth: '180px',
+            padding: '14px 20px',
+            fontSize: '1.1rem',
+          }}
+        >
           Contact
         </Button>
       </Box>
@@ -223,11 +240,11 @@ const RoomsSection = () => {
         <Typography
           variant="h2"
           sx={{
-            fontWeight: 600,
+            fontWeight: 700,
             mb: 2,
-            fontFamily: 'serif',
+            fontFamily: '"Georgia",serif',
             color: theme.palette.secondary.main,
-            fontSize: { xs: '2.5rem', md: '4rem' },
+            fontSize: { xs: '2.5rem',sm:'3rem', md: '3.5rem' },
           }}
         >
           Our Rooms
@@ -238,7 +255,7 @@ const RoomsSection = () => {
         </Typography>
       </Box>
 
-      {/* GRID (unchanged) */}
+      {/* GRID (preserve your layout exactly) */}
       <Grid container spacing={2}>
         {roomData.slice(0, 3).map((room) => (
           <Grid size={{ xs: 12, sm: 4 }} key={room.id}>

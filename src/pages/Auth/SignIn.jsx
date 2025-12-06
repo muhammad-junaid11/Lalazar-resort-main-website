@@ -11,7 +11,9 @@ import {
 import { useForm } from "react-hook-form";
 import { useNavigate } from "react-router-dom";
 import TextFieldInput from "../../components/Form/TextFieldInput";
-import bgImage from "../../assets/img1.jpg";
+import bgImage from "../../assets/img1.webp";
+import logo from "../../assets/logo.jpg";
+import Cookies from "js-cookie";
 
 import {
   signInWithEmailAndPassword,
@@ -41,7 +43,7 @@ const SignIn = () => {
       "& .MuiInputBase-input": {
         backgroundColor: "rgba(255,255,255,0.08)",
         color: "#fff",
-        padding: "16.5px 14px",
+        padding: "10px 10px",
         "&:-webkit-autofill": {
           backgroundColor: "rgba(255,255,255,0.08) !important",
           WebkitBoxShadow:
@@ -67,42 +69,50 @@ const SignIn = () => {
       color: "rgba(255,255,255,0.7)",
       "&.Mui-focused": { color: theme.palette.secondary.main },
       "&:not(.MuiInputLabel-shrink)": {
-        transform: "translate(14px, 16px) scale(1)",
+        transform: "translate(10px, 10px) scale(1)",
       },
       "&.MuiInputLabel-shrink": {
         transform: "translate(14px, -9px) scale(0.75)",
         color: "rgba(255,255,255,0.7)",
       },
       '&.MuiInputLabel-root[data-shrink="false"]': {
-        transform: "translate(14px, 16px) scale(1)",
+        transform: "translate(10px, 10px) scale(1)",
       },
     },
   };
 
-  const onSubmit = async (data) => {
-    setIsLoading(true);
-    try {
-      const userCredential = await signInWithEmailAndPassword(
-        auth,
-        data.userEmail,
-        data.password
-      );
-      const user = userCredential.user;
+const onSubmit = async (data) => {
+  setIsLoading(true);
+  try {
+    const userCredential = await signInWithEmailAndPassword(
+      auth,
+      data.userEmail,
+      data.password
+    );
+    const user = userCredential.user;
 
-      // Get secure token (JWT-like)
-      const token = await user.getIdToken();
-      localStorage.setItem("userToken", token); // store securely
-      localStorage.setItem("userName", user.email.split("@")[0]); // store display name
+    // Store user token
+ const token = await user.getIdToken();
+Cookies.set("userToken", token, { expires: 1, sameSite: "Lax" }); 
 
-      alert("Signed in successfully!");
-      navigate("/");
-    } catch (error) {
-      console.error("Sign in error:", error);
-      alert("Failed to sign in. Check your credentials.");
-    } finally {
-      setIsLoading(false);
+    alert("Signed in successfully!");
+
+    // Only redirect if user clicked Book Now before
+    const redirectPath = localStorage.getItem("redirectAfterLogin");
+    if (redirectPath) {
+      localStorage.removeItem("redirectAfterLogin"); // clear after redirect
+      navigate(redirectPath);
+    } else {
+      navigate("/"); // default home page
     }
-  };
+  } catch (error) {
+    console.error("Sign in error:", error);
+    alert("Failed to sign in. Check your credentials.");
+  } finally {
+    setIsLoading(false);
+  }
+};
+
 
   const handleForgotPassword = async () => {
     const email = getValues("userEmail")?.trim();
@@ -147,7 +157,7 @@ const SignIn = () => {
           position: "absolute",
           inset: 0,
           background: "rgba(0,0,0,0.55)",
-          backdropFilter: "blur(6px)",
+          // backdropFilter: "blur(6px)",
           zIndex: 0,
         },
       }}
@@ -158,12 +168,47 @@ const SignIn = () => {
           borderRadius: "18px",
           width: { xs: "90%", sm: "400px" },
           zIndex: 1,
-          background: "rgba(255,255,255,0.08)",
-          backdropFilter: "blur(18px) saturate(170%)",
+          background: "rgba(50, 53, 29, 0.7)",
+          backdropFilter: "blur(7px) saturate(170%)",
           border: "1px solid rgba(255,255,255,0.15)",
           boxShadow: "0 8px 20px rgba(0,0,0,0.45)",
         }}
       >
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            mb: 1,
+            gap: 1, // spacing between logo and text
+          }}
+        >
+          {/* Logo */}
+          <Box
+            component="img"
+            src={logo}
+            alt="Logo"
+            sx={{
+              width: { xs: 70, sm: 50 },
+              height: "auto",
+              borderRadius: "10px",
+              border: "2px solid rgba(254, 255, 253, 0.4)",
+              p: "0.5px",
+            }}
+          />
+
+          <Typography
+            variant="h6"
+            sx={{
+              color: theme.palette.secondary.main,
+              fontWeight: 600,
+              letterSpacing: 0.5,
+            }}
+          >
+            Lalazar Resort
+          </Typography>
+        </Box>
+
         <Typography
           variant="h4"
           sx={{ color: "#fff", textAlign: "center", mb: 3, fontWeight: 400 }}
@@ -171,11 +216,11 @@ const SignIn = () => {
           Login
         </Typography>
 
-        <Box sx={{ textAlign: "center", mb: 3 }}>
+        {/* <Box sx={{ textAlign: "center", mb: 3 }}>
           <PersonOutlineIcon
             sx={{ fontSize: "4rem", color: "rgba(255,255,255,0.7)" }}
           />
-        </Box>
+        </Box> */}
 
         <Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
           <Stack spacing={2}>
@@ -212,6 +257,7 @@ const SignIn = () => {
             >
               <Link
                 component="button"
+                type="button"
                 variant="body2"
                 onClick={handleForgotPassword}
                 disabled={isResetLoading}

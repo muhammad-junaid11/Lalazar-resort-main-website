@@ -15,9 +15,10 @@ import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 import logo from "../assets/logo.jpg";
 import { Link, useLocation, useNavigate } from "react-router-dom";
 import { useTheme } from "@mui/material/styles";
-import { auth } from "../services/Firebase/Firebase";
+import { auth, db } from "../services/Firebase/Firebase"; // Ensure 'auth' and 'db' are correctly imported
+import { collection, query, where, getDocs } from "firebase/firestore"; // Updated imports for querying
 
-// Submenu for Rooms
+// Submenu for Rooms (Unchanged)
 const roomsSubMenu = [
   { label: "Deluxe Room", to: "/rooms/deluxe" },
   { label: "Executive Room", to: "/rooms/executive" },
@@ -25,14 +26,14 @@ const roomsSubMenu = [
   { label: "Luxury Room", to: "/rooms/luxury" },
 ];
 
-// Mobile Drawer Item
+// Mobile Drawer Item (Unchanged)
 const MobileNavItem = ({ to, children, setMobileOpen }) => (
   <MenuItem component={Link} to={to} onClick={() => setMobileOpen(false)}>
     {children}
   </MenuItem>
 );
 
-// Desktop Nav Item
+// Desktop Nav Item (Unchanged)
 const NavItem = ({ to, children, selected, theme }) => (
   <Typography
     component={Link}
@@ -44,7 +45,7 @@ const NavItem = ({ to, children, selected, theme }) => (
       pb: 0.5,
       borderBottom: selected
         ? `2px solid ${theme.palette.secondary.main}`
-        : `2px solid transparent`,
+        : "2px solid transparent",
       ":hover": {
         borderBottom: `2px solid ${theme.palette.secondary.main}`,
         color: theme.palette.primary.contrastText,
@@ -56,7 +57,7 @@ const NavItem = ({ to, children, selected, theme }) => (
   </Typography>
 );
 
-// Dropdown for Rooms
+// Dropdown for Rooms (Unchanged)
 const Dropdown = ({ selected, theme }) => {
   const [anchorEl, setAnchorEl] = useState(null);
   const open = Boolean(anchorEl);
@@ -120,38 +121,85 @@ const Dropdown = ({ selected, theme }) => {
 
 const Navbar = ({ mobileOpen, setMobileOpen }) => {
   const [userName, setUserName] = useState(null);
+  const [userMenuAnchorEl, setUserMenuAnchorEl] = useState(null); // New state for user dropdown menu
   const location = useLocation();
   const theme = useTheme();
   const navigate = useNavigate();
 
+  // 🚀 FIX: Use onAuthStateChanged to reliably track authentication state and fetch username by querying Firestore by email
   useEffect(() => {
-    const token = localStorage.getItem("userToken");
-    const name = localStorage.getItem("userName");
-    if (token && name) {
-      setUserName(name);
-    } else {
-      setUserName(null);
-    }
-  }, [location.pathname]);
+    // 1. Set up the listener
+    const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      if (user) {
+        // User is signed in. Query Firestore for the document where userEmail matches the user's email.
+        try {
+          console.log("Querying Firestore for userName with email:", user.email); // Add logging for debugging
+          const q = query(collection(db, "users"), where("userEmail", "==", user.email));
+          const querySnapshot = await getDocs(q);
+          
+          if (!querySnapshot.empty) {
+            // Take the first matching document (assuming one per email)
+            const userDoc = querySnapshot.docs[0];
+            const data = userDoc.data();
+            const fetchedUserName = data.userName || user.email.split("@")[0] || "User";
+            console.log("Fetched userName from Firestore:", fetchedUserName); // Confirm fetch success
+            
+            // Set the state and update localStorage with the correct name
+            setUserName(fetchedUserName);
+            localStorage.setItem("userName", fetchedUserName);
+          } else {
+            console.warn("No Firestore document found for email:", user.email); // Log if no doc found
+            // No document found, use email prefix as fallback
+            const defaultName = user.email.split("@")[0] || "User";
+            setUserName(defaultName);
+            localStorage.setItem("userName", defaultName);
+          }
+        } catch (err) {
+          console.error("Failed to query userName from Firestore:", err); // Check console for this
+          // Fallback to email prefix only
+          const fallbackName = user.email.split("@")[0] || "User";
+          setUserName(fallbackName);
+          localStorage.setItem("userName", fallbackName);
+        }
+      } else {
+        // User is signed out. Clear all session data.
+        setUserName(null);
+        localStorage.removeItem("userToken");
+        localStorage.removeItem("userName");
+      }
+    });
+
+    // 2. Cleanup subscription on unmount
+    return () => unsubscribe();
+  }, []); // Empty dependency array ensures this listener is only set up once.
 
   const isSelected = (path) => location.pathname === path;
 
+  // Updated handleLogout: Clears localStorage and sessionStorage, logs out, and navigates
   const handleLogout = () => {
     auth.signOut();
+    // Clear all relevant data from localStorage and sessionStorage
     localStorage.removeItem("userToken");
     localStorage.removeItem("userName");
+    sessionStorage.clear(); // Clear all sessionStorage for completeness
     setUserName(null);
+    setUserMenuAnchorEl(null); // Close the dropdown menu
     navigate("/");
+  };
+
+  // Handlers for the user dropdown menu
+  const handleUserMenuClick = (event) => {
+    setUserMenuAnchorEl(event.currentTarget);
+  };
+
+  const handleUserMenuClose = () => {
+    setUserMenuAnchorEl(null);
   };
 
   return (
     <AppBar
       position="absolute"
-      sx={{
-        background: "transparent",
-        boxShadow: "none",
-        px: { xs: 2, md: 12 },
-      }}
+      sx={{ background: "transparent", boxShadow: "none", px: { xs: 2, md: 12 } }}
     >
       <Toolbar
         sx={{
@@ -205,16 +253,42 @@ const Navbar = ({ mobileOpen, setMobileOpen }) => {
         <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
           <Box sx={{ display: { xs: "none", md: "flex" }, gap: 2 }}>
             {userName ? (
-              <Button
-                sx={{
-                  color: theme.palette.primary.contrastText,
-                  textTransform: "none",
-                  fontWeight: "bold",
-                }}
-                onClick={handleLogout}
-              >
-                {userName} 🔒
-              </Button>
+              <>
+                <Button
+                  id="user-menu-button"
+                  aria-controls={Boolean(userMenuAnchorEl) ? "user-menu" : undefined}
+                  aria-haspopup="true"
+                  aria-expanded={Boolean(userMenuAnchorEl) ? "true" : undefined}
+                  onClick={handleUserMenuClick}
+                  endIcon={
+                    <KeyboardArrowDownIcon
+                      sx={{ color: theme.palette.primary.contrastText, fontSize: 20 }}
+                    />
+                  }
+                  sx={{
+                    color: theme.palette.primary.contrastText,
+                    textTransform: "none",
+                    fontWeight: "bold",
+                    padding: 0,
+                    minWidth: "auto",
+                    ":hover": {
+                      backgroundColor: "transparent",
+                      color: theme.palette.secondary.main,
+                    },
+                  }}
+                >
+                  {userName}
+                </Button>
+                <Menu
+                  id="user-menu"
+                  anchorEl={userMenuAnchorEl}
+                  open={Boolean(userMenuAnchorEl)}
+                  onClose={handleUserMenuClose}
+                  MenuListProps={{ "aria-labelledby": "user-menu-button" }}
+                >
+                  <MenuItem onClick={handleLogout}>Logout</MenuItem>
+                </Menu>
+              </>
             ) : (
               <>
                 <Button
@@ -250,7 +324,7 @@ const Navbar = ({ mobileOpen, setMobileOpen }) => {
             )}
           </Box>
 
-          {/* Mobile Menu */}
+          {/* Mobile Menu (Unchanged) */}
           <IconButton
             sx={{ display: { xs: "block", md: "none" } }}
             onClick={() => setMobileOpen(true)}
@@ -259,7 +333,7 @@ const Navbar = ({ mobileOpen, setMobileOpen }) => {
           </IconButton>
         </Box>
 
-        {/* Mobile Drawer */}
+        {/* Mobile Drawer (Unchanged) */}
         <Drawer
           anchor="right"
           open={mobileOpen}
@@ -275,6 +349,7 @@ const Navbar = ({ mobileOpen, setMobileOpen }) => {
             <MobileNavItem to="/activities" setMobileOpen={setMobileOpen}>
               Activities
             </MobileNavItem>
+            {/* ... other mobile menu items ... */}
             <MobileNavItem to="/rooms" setMobileOpen={setMobileOpen}>
               Rooms
             </MobileNavItem>
@@ -284,6 +359,7 @@ const Navbar = ({ mobileOpen, setMobileOpen }) => {
             <MobileNavItem to="/contact" setMobileOpen={setMobileOpen}>
               Contact
             </MobileNavItem>
+
             {userName ? (
               <MobileNavItem
                 to="/"

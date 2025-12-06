@@ -11,7 +11,7 @@ import {
 } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import RemoveIcon from "@mui/icons-material/Remove";
-import hotelView from "../../assets/deluxe.jpg";
+import hotelView from "../../assets/getanswer.webp";
 
 // --- FAQ Data ---
 const faqData = [
@@ -43,7 +43,7 @@ const faqData = [
 
 const FaqSection = () => {
   const theme = useTheme();
-  const [expanded, setExpanded] = useState("panel2");
+  const [expanded, setExpanded] = useState("panel1");
 
   const handleChange = (panel) => (event, isExpanded) => {
     setExpanded(isExpanded ? panel : false);
@@ -95,7 +95,7 @@ const FaqSection = () => {
                   sx={{
                     fontWeight: 500,
                     fontFamily: "serif",
-                    color: theme.palette.primary.main,
+                    color: theme.palette.secondary.main,
                     fontSize: { xs: "2rem", md: "3rem" },
                   }}
                 >
@@ -187,6 +187,8 @@ const FaqSection = () => {
                 }}
               />
             </Box>
+
+            
           </Grid>
         </Grid>
       </Container>

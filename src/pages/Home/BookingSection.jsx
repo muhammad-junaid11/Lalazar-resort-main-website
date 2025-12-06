@@ -4,6 +4,7 @@ import DatePickerInput from "../../components/Form/DatePickerInput";
 import GuestsInput from "./GuestsInput";
 import { useFormContext } from "react-hook-form";
 import { useTheme } from "@mui/material/styles";
+import { useNavigate } from "react-router-dom";
 
 const BookingSection = ({ images }) => {
   const [index, setIndex] = useState(0);
@@ -11,22 +12,25 @@ const BookingSection = ({ images }) => {
   const { control, handleSubmit } = useFormContext();
 
   useEffect(() => {
-    const interval = setInterval(() => setIndex((prev) => (prev + 1) % images.length), 5000);
+    const interval = setInterval(
+      () => setIndex((prev) => (prev + 1) % images.length),
+      5000
+    );
     return () => clearInterval(interval);
   }, [images.length]);
 
   const onSubmit = (data) => console.log("Search Data:", data);
+  const navigate = useNavigate();
 
   return (
     <Box
       sx={{
         position: "relative",
         width: "100%",
-        height: { xs: "90vh", md: "100vh" },  // hero size
+        height: { xs: "90vh", md: "100vh" }, // hero size
         overflow: "hidden",
       }}
     >
-      {/* Background Images */}
       {images.map((img, i) => (
         <Box
           key={i}
@@ -41,13 +45,11 @@ const BookingSection = ({ images }) => {
           }}
         />
       ))}
-
-      {/* Dark Overlay */}
       <Box
         sx={{
           position: "absolute",
           inset: 0,
-          backgroundColor: "rgba(0,0,0,0.4)",
+          backgroundColor: "rgba(0,0,0,0.5)",
         }}
       />
 
@@ -65,18 +67,26 @@ const BookingSection = ({ images }) => {
           zIndex: 2,
         }}
       >
-        <Typography
-          variant="h2"
-          sx={{
-            fontWeight: "bold",
-            color: theme.palette.common.white,
-            textAlign: "center",
-            textShadow: "2px 2px 8px rgba(0,0,0,0.7)",
-            fontSize: { xs: "2rem", md: "3.5rem" },
-          }}
-        >
-          Luxury Living In <br /> The Heart Of <br /> Shogran
-        </Typography>
+        <Box
+  sx={{
+    maxWidth: { xs: "90%", md: "550px" }, // control width for responsiveness
+    textAlign: "center",
+  }}
+>
+  <Typography
+    variant="h2"
+    sx={{
+      fontWeight: "bold",
+      fontFamily: "serif",
+      color: theme.palette.common.white,
+      textShadow: "2px 2px 8px rgba(0,0,0,0.7)",
+      fontSize: { xs: "2rem", md: "3.5rem" },
+    }}
+  >
+    Luxury Living In The Heart Of Shogran
+  </Typography>
+</Box>
+
 
         {/* FORM */}
         <Box
@@ -94,13 +104,58 @@ const BookingSection = ({ images }) => {
             alignItems: "center",
           }}
         >
-          <DatePickerInput name="checkin" control={control} label="Check-in" sx={{ flex: 1 }} />
-          <DatePickerInput name="checkout" control={control} label="Check-out" sx={{ flex: 1 }} />
-          <GuestsInput name="guests" control={control} label="Guests" sx={{ flex: 1 }} />
-          <Button type="submit" variant="contained" color="secondary" sx={{ px: 5, py: 2 }}>
+          <DatePickerInput
+            name="checkin"
+            control={control}
+            label="Check-in"
+            sx={{ flex: 1 }}
+          />
+          <DatePickerInput
+            name="checkout"
+            control={control}
+            label="Check-out"
+            sx={{ flex: 1 }}
+          />
+          <GuestsInput
+            name="guests"
+            control={control}
+            label="Guests"
+            sx={{ flex: 1 }}
+          />
+          <Button
+            type="submit"
+            variant="contained"
+            color="secondary"
+            sx={{ px: 5, py: 2 }}
+          >
             Search
           </Button>
         </Box>
+      <Button
+  variant="contained"
+  color="secondary"
+  sx={{
+    mt: 3,
+    px: 4,
+    py: 1.5,
+    fontSize: "1.1rem",
+    fontWeight: 600,
+    borderRadius: 2,
+  }}
+  onClick={() => {
+    const userToken = localStorage.getItem("userToken");
+    if (userToken) {
+      navigate("/book"); // already logged in → go to booking
+    } else {
+      // Save intended path for redirect after login
+      localStorage.setItem("redirectAfterLogin", "/book");
+      navigate("/signin"); // go to sign-in
+    }
+  }}
+>
+  Book Now
+</Button>
+
       </Box>
     </Box>
   );

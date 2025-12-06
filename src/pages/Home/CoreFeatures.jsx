@@ -5,10 +5,10 @@ import RestaurantOutlinedIcon from '@mui/icons-material/RestaurantOutlined';
 import SecurityOutlinedIcon from '@mui/icons-material/SecurityOutlined';
 import LocalParkingOutlinedIcon from '@mui/icons-material/LocalParkingOutlined';
 import LocalLaundryServiceOutlinedIcon from '@mui/icons-material/LocalLaundryServiceOutlined';
-import ChildCareOutlinedIcon from '@mui/icons-material/ChildCareOutlined'; // Using a child-related icon
+import ChildCareOutlinedIcon from '@mui/icons-material/ChildCareOutlined';
 import PetsOutlinedIcon from '@mui/icons-material/PetsOutlined';
 import WifiOutlinedIcon from '@mui/icons-material/WifiOutlined';
-import ApartmentOutlinedIcon from '@mui/icons-material/ApartmentOutlined'; // Icon for the main heading
+import ApartmentOutlinedIcon from '@mui/icons-material/ApartmentOutlined';
 
 const featuresData = [
   { icon: RestaurantOutlinedIcon, text: 'Restaurant' },
@@ -19,7 +19,6 @@ const featuresData = [
   { icon: PetsOutlinedIcon, text: 'Pet Friendly' },
   { icon: WifiOutlinedIcon, text: 'High Speed WiFi' },
 ];
-
 
 const FeatureCard = ({ Icon, text, theme }) => (
   <Box
@@ -43,12 +42,13 @@ const FeatureCard = ({ Icon, text, theme }) => (
         marginBottom: theme.spacing(1),
       }}
     >
-      {/* The main icon */}
-      <Icon sx={{ 
-        fontSize: 48, 
-        color: theme.palette.warning.main, // Orange color from theme
-        zIndex: 2 
-      }} />
+      <Icon
+        sx={{
+          fontSize: 48,
+          color: theme.palette.secondary.main, // UPDATED
+          zIndex: 2,
+        }}
+      />
 
       <Box
         sx={{
@@ -58,8 +58,8 @@ const FeatureCard = ({ Icon, text, theme }) => (
           transform: 'translateX(-50%)',
           width: '70px',
           height: '2px',
-          backgroundColor: theme.palette.warning.main, // Orange line
-          zIndex: 1
+          backgroundColor: theme.palette.secondary.main, // UPDATED
+          zIndex: 1,
         }}
       />
     </Box>
@@ -69,7 +69,7 @@ const FeatureCard = ({ Icon, text, theme }) => (
       align="center"
       sx={{
         fontWeight: 600,
-        color: theme.palette.text.primary,
+        color: theme.palette.text.secondary,
         marginTop: theme.spacing(2),
       }}
     >
@@ -97,17 +97,16 @@ const CoreFeatures = () => {
           position: 'relative',
         }}
       >
-
-        <ApartmentOutlinedIcon 
-          sx={{ 
-            fontSize: 40, 
-            color: theme.palette.warning.main, 
+        <ApartmentOutlinedIcon
+          sx={{
+            fontSize: 40,
+            color: theme.palette.secondary.main, // UPDATED
             marginBottom: theme.spacing(1),
             display: { xs: 'block', md: 'inline-block' },
-            margin: { xs: '0 auto', md: '0' }
-          }} 
+            margin: { xs: '0 auto', md: '0' },
+          }}
         />
-        
+
         <Typography
           variant="h3"
           component="h2"
@@ -121,11 +120,12 @@ const CoreFeatures = () => {
         >
           Core Features
         </Typography>
+
         <Box
           sx={{
             width: '100px',
             height: '3px',
-            backgroundColor: theme.palette.warning.main,
+            backgroundColor: theme.palette.secondary.main, // UPDATED
             marginBottom: theme.spacing(1),
             margin: { xs: '0 auto 8px auto', md: '0 0 8px 0' },
           }}
@@ -135,22 +135,14 @@ const CoreFeatures = () => {
       <Grid container spacing={4} justifyContent="center" sx={{ maxWidth: '1200px', margin: '0 auto' }}>
         {featuresData.map((feature, index) => (
           <Grid
-            size={{ xs: 12, sm: 6,md:4, lg:3 }}
-            xs={12}
-            sm={6} 
-            md={4}  
-            lg={3}  
+            size={{ xs: 6, sm: 6, md: 4, lg: 3 }}
             key={index}
-            sx={{ 
-                display: 'flex', 
-                justifyContent: 'center',
+            sx={{
+              display: 'flex',
+              justifyContent: 'center',
             }}
           >
-            <FeatureCard
-              Icon={feature.icon}
-              text={feature.text}
-              theme={theme}
-            />
+            <FeatureCard Icon={feature.icon} text={feature.text} theme={theme} />
           </Grid>
         ))}
       </Grid>

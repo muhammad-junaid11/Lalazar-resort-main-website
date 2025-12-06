@@ -6,6 +6,8 @@ import App from './App.jsx'
 import { LocalizationProvider } from "@mui/x-date-pickers";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { ThemeProvider } from "@mui/material/styles";
+import 'react-date-range/dist/styles.css'; // main style file
+import 'react-date-range/dist/theme/default.css'; // theme css file
 import Theme from './Theme/Theme.jsx';
 
 createRoot(document.getElementById('root')).render(
