@@ -5,7 +5,7 @@ import FirstStep from "./FirstStep";
 import SecondStep from "./SecondStep";
 import ThirdStep from "./ThirdStep";
 
-// Descriptions for the Vertical Stepper
+// Descriptions for the Vertical Stepper (same as before)
 const verticalSteps = [
     {
         label: "Booking Details",
@@ -22,7 +22,7 @@ const verticalSteps = [
     },
 ];
 
-// Helper Component for Vertical Stepper
+// Helper Component for Vertical Stepper (same as before)
 const VerticalLinearStepper = ({ theme, activeStep }) => {
     // Custom style overrides for the vertical stepper to match the theme color
     const verticalStepperSx = {
@@ -110,7 +110,7 @@ const BookingLayout = () => {
 
     const handleNext = () => {
         if (step === 1) {
-            const required = ["checkInDate", "checkOutDate", "numGuests", "numRooms", "city", "roomCategory"];
+            const required = ["checkInDate", "checkOutDate", "numGuests", "numRooms", "city"];
             for (let field of required) {
                 if (!formData.firstStep[field]) {
                     alert(`Please enter a value for the ${field} field to continue.`);
@@ -139,6 +139,9 @@ const BookingLayout = () => {
     };
 
     const renderStep = () => {
+        // Extract the selected category ID from the first step's data
+        const selectedCategoryId = formData.firstStep.roomCategory;
+
         switch (step) {
             case 1:
                 return (
@@ -152,6 +155,8 @@ const BookingLayout = () => {
             case 2:
                 return (
                     <SecondStep
+                        // ⭐ NEW PROP: Pass the selected category ID
+                        selectedCategoryId={selectedCategoryId} 
                         selectedRoom={formData.secondStep.selectedRoom}
                         setSelectedRoom={(room) =>
                             setFormData((prev) => ({
@@ -162,14 +167,8 @@ const BookingLayout = () => {
                     />
                 );
             case 3:
-                return (
-                    <ThirdStep
-                        defaultValues={formData.thirdStep}
-                        onChange={(data) =>
-                            setFormData((prev) => ({ ...prev, thirdStep: data }))
-                        }
-                    />
-                );
+                return <ThirdStep formData={formData} />; 
+
             default:
                 return null;
         }

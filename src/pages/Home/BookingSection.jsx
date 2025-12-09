@@ -5,12 +5,25 @@ import GuestsInput from "./GuestsInput";
 import { useFormContext } from "react-hook-form";
 import { useTheme } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
+import { auth } from "../../services/Firebase/Firebase";   // ✅ ADDED
 
 const BookingSection = ({ images }) => {
   const [index, setIndex] = useState(0);
   const theme = useTheme();
   const { control, handleSubmit } = useFormContext();
+  const navigate = useNavigate();
 
+  // ✅ LOGIN STATE
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+
+  useEffect(() => {
+    const unsubscribe = auth.onAuthStateChanged((user) => {
+      setIsLoggedIn(!!user);
+    });
+    return () => unsubscribe();
+  }, []);
+
+  // Existing slider effect (unchanged)
   useEffect(() => {
     const interval = setInterval(
       () => setIndex((prev) => (prev + 1) % images.length),
@@ -20,14 +33,13 @@ const BookingSection = ({ images }) => {
   }, [images.length]);
 
   const onSubmit = (data) => console.log("Search Data:", data);
-  const navigate = useNavigate();
 
   return (
     <Box
       sx={{
         position: "relative",
         width: "100%",
-        height: { xs: "90vh", md: "100vh" }, // hero size
+        height: { xs: "90vh", md: "100vh" },
         overflow: "hidden",
       }}
     >
@@ -45,6 +57,7 @@ const BookingSection = ({ images }) => {
           }}
         />
       ))}
+
       <Box
         sx={{
           position: "absolute",
@@ -53,10 +66,9 @@ const BookingSection = ({ images }) => {
         }}
       />
 
-      {/* CONTENT */}
       <Box
         sx={{
-          position: "relative", // ❗ changed from absolute → now part of normal layout
+          position: "relative",
           height: "100%",
           display: "flex",
           flexDirection: "column",
@@ -68,25 +80,24 @@ const BookingSection = ({ images }) => {
         }}
       >
         <Box
-  sx={{
-    maxWidth: { xs: "90%", md: "550px" }, // control width for responsiveness
-    textAlign: "center",
-  }}
->
-  <Typography
-    variant="h2"
-    sx={{
-      fontWeight: "bold",
-      fontFamily: "serif",
-      color: theme.palette.common.white,
-      textShadow: "2px 2px 8px rgba(0,0,0,0.7)",
-      fontSize: { xs: "2rem", md: "3.5rem" },
-    }}
-  >
-    Luxury Living In The Heart Of Shogran
-  </Typography>
-</Box>
-
+          sx={{
+            maxWidth: { xs: "90%", md: "550px" },
+            textAlign: "center",
+          }}
+        >
+          <Typography
+            variant="h2"
+            sx={{
+              fontWeight: "bold",
+              fontFamily: "serif",
+              color: theme.palette.common.white,
+              textShadow: "2px 2px 8px rgba(0,0,0,0.7)",
+              fontSize: { xs: "2rem", md: "3.5rem" },
+            }}
+          >
+            Luxury Living In The Heart Of Shogran
+          </Typography>
+        </Box>
 
         {/* FORM */}
         <Box
@@ -110,18 +121,21 @@ const BookingSection = ({ images }) => {
             label="Check-in"
             sx={{ flex: 1 }}
           />
+
           <DatePickerInput
             name="checkout"
             control={control}
             label="Check-out"
             sx={{ flex: 1 }}
           />
+
           <GuestsInput
             name="guests"
             control={control}
             label="Guests"
             sx={{ flex: 1 }}
           />
+
           <Button
             type="submit"
             variant="contained"
@@ -131,31 +145,29 @@ const BookingSection = ({ images }) => {
             Search
           </Button>
         </Box>
-      <Button
-  variant="contained"
-  color="secondary"
-  sx={{
-    mt: 3,
-    px: 4,
-    py: 1.5,
-    fontSize: "1.1rem",
-    fontWeight: 600,
-    borderRadius: 2,
-  }}
-  onClick={() => {
-    const userToken = localStorage.getItem("userToken");
-    if (userToken) {
-      navigate("/book"); // already logged in → go to booking
-    } else {
-      // Save intended path for redirect after login
-      localStorage.setItem("redirectAfterLogin", "/book");
-      navigate("/signin"); // go to sign-in
-    }
-  }}
->
-  Book Now
-</Button>
-
+        <Button
+          variant="contained"
+          color="secondary"
+          sx={{
+            mt: 3,
+            px: 4,
+            py: 1.5,
+            color:"white",
+            fontSize: "1.1rem",
+            fontWeight: 600,
+            borderRadius: 2,
+          }}
+          onClick={() => {
+            if (isLoggedIn) {
+              navigate("/book");
+            } else {
+              localStorage.setItem("redirectAfterLogin", "/book");
+              navigate("/signin");
+            }
+          }}
+        >
+          Book Now
+        </Button>
       </Box>
     </Box>
   );

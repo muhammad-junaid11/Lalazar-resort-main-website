@@ -91,20 +91,15 @@ const onSubmit = async (data) => {
     );
     const user = userCredential.user;
 
-    // Store user token
- const token = await user.getIdToken();
-Cookies.set("userToken", token, { expires: 1, sameSite: "Lax" }); 
+    Cookies.set("userUID", user.uid, { secure: true, sameSite: "Lax", expires: 1 });
+    const token = await user.getIdToken();
+    Cookies.set("userToken", token, { secure: true, sameSite: "Lax", expires: 1 });
 
-    alert("Signed in successfully!");
+    // Get redirect path
+    const redirectPath = localStorage.getItem("redirectAfterLogin") || "/";
+    localStorage.removeItem("redirectAfterLogin");
+    navigate(redirectPath); // Navigate to either protected route or homepage
 
-    // Only redirect if user clicked Book Now before
-    const redirectPath = localStorage.getItem("redirectAfterLogin");
-    if (redirectPath) {
-      localStorage.removeItem("redirectAfterLogin"); // clear after redirect
-      navigate(redirectPath);
-    } else {
-      navigate("/"); // default home page
-    }
   } catch (error) {
     console.error("Sign in error:", error);
     alert("Failed to sign in. Check your credentials.");
@@ -112,6 +107,9 @@ Cookies.set("userToken", token, { expires: 1, sameSite: "Lax" });
     setIsLoading(false);
   }
 };
+
+
+
 
 
   const handleForgotPassword = async () => {

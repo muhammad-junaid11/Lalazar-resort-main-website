@@ -8,6 +8,7 @@ import {
   Button,
   useTheme,
   ClickAwayListener,
+  CircularProgress,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import WifiIcon from "@mui/icons-material/Wifi";
@@ -16,32 +17,118 @@ import LocalParkingIcon from "@mui/icons-material/LocalParking";
 import RestaurantIcon from "@mui/icons-material/Restaurant";
 import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
 
+import { collection, getDocs, doc, getDoc } from "firebase/firestore";
+import { db } from "../../services/Firebase/Firebase";
+
 import { useForm } from "react-hook-form";
 import RHFformProvider from "../../components/Form/RHFformProvider";
 import TextFieldInput from "../../components/Form/TextFieldInput";
 import CheckboxInput from "../../components/Form/CheckboxInput";
 
-const rooms = [
-  { id: 1, title: "Shogran", hotel: "Jamnu Bagh", price: 250, image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c", amenities: ["wifi", "pool", "breakfast"] },
-  { id: 2, title: "Naran", hotel: "5 star hotel", price: 180, image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c", amenities: ["parking", "wifi"] },
-  { id: 3, title: "Urban Loft", hotel: "The Artline", price: 300, image: "https://images.unsplash.com/photo-1600585154340-be6161a56a0c", amenities: ["gym", "wifi", "breakfast"] },
-];
+const amenityIcons = {
+  wifi: WifiIcon,
+  pool: PoolIcon,
+  parking: LocalParkingIcon,
+  breakfast: RestaurantIcon,
+  gym: FitnessCenterIcon,
+};
 
-const amenityIcons = { wifi: WifiIcon, pool: PoolIcon, parking: LocalParkingIcon, breakfast: RestaurantIcon, gym: FitnessCenterIcon };
+const useFetchRooms = (selectedCategoryId) => {
+  const [rooms, setRooms] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [categoryName, setCategoryName] = useState("");
 
-export const SecondStep = ({ selectedRoom, setSelectedRoom }) => {
+  useEffect(() => {
+    if (!selectedCategoryId) {
+      setRooms([]);
+      setLoading(false);
+      setCategoryName("");
+      return;
+    }
+
+    const fetchRooms = async () => {
+      setLoading(true);
+      setError(null);
+
+      try {
+        const catRef = doc(db, "roomCategory", selectedCategoryId);
+        const catSnap = await getDoc(catRef);
+        const foundCategoryName = catSnap.exists()
+          ? catSnap.data().categoryName
+          : "Selected Category";
+        setCategoryName(foundCategoryName);
+
+        const roomsSnapshot = await getDocs(collection(db, "rooms"));
+
+        const hotelIds = new Set();
+        const fetchedRoomsData = roomsSnapshot.docs
+          .filter((doc) => doc.data().categoryId === selectedCategoryId)
+          .map((roomDoc) => {
+            const data = roomDoc.data();
+            if (data.hotelId) hotelIds.add(data.hotelId);
+            return {
+              id: roomDoc.id,
+              title: data.roomName || `${foundCategoryName} Room`,
+              hotelId: data.hotelId,
+              price: data.price || 0,
+              image: data.image || "https://via.placeholder.com/300x220",
+              amenities: data.amenities || [],
+              categoryName: foundCategoryName,
+            };
+          });
+
+        const hotelNameMap = {};
+        if (hotelIds.size > 0) {
+          const hotelPromises = Array.from(hotelIds).map((id) =>
+            getDoc(doc(db, "hotel", id))
+          );
+          const hotelSnaps = await Promise.all(hotelPromises);
+          hotelSnaps.forEach((snap) => {
+            if (snap.exists() && snap.data().hotelName) {
+              hotelNameMap[snap.id] = snap.data().hotelName;
+            }
+          });
+        }
+
+        const finalRooms = fetchedRoomsData.map((room) => ({
+          ...room,
+          hotel: hotelNameMap[room.hotelId] || "Hotel Name Not Found",
+        }));
+
+        setRooms(finalRooms);
+      } catch (err) {
+        console.error("Error fetching rooms or hotels:", err);
+        setError("Failed to load rooms. Check your network or database.");
+        setRooms([]);
+        setCategoryName("");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchRooms();
+  }, [selectedCategoryId]);
+
+  return { rooms, loading, error, categoryName };
+};
+
+const SecondStep = ({ selectedRoom, setSelectedRoom, selectedCategoryId }) => {
   const theme = useTheme();
-  const methods = useForm({ defaultValues: { search: "", priceRange: [null, null], amenities: {} } });
-  const { watch } = methods;
+
+  const { rooms: fetchedRooms, loading, error, categoryName } = useFetchRooms(
+    selectedCategoryId
+  );
+
+  const methods = useForm({ defaultValues: { search: "", priceRange: ["", ""], amenities: {} } });
+  const { watch, control } = methods;
   const filters = watch();
 
   const [priceOpen, setPriceOpen] = useState(false);
   const priceRef = useRef(null);
-
   const [amenitiesOpen, setAmenitiesOpen] = useState(false);
   const amenitiesRef = useRef(null);
 
-  // Close dropdowns on outside click
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (priceRef.current && !priceRef.current.contains(event.target)) setPriceOpen(false);
@@ -51,41 +138,64 @@ export const SecondStep = ({ selectedRoom, setSelectedRoom }) => {
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, []);
 
-  const [minPrice, maxPrice] = filters.priceRange;
+  const [minPrice, maxPrice] = filters.priceRange.map((p) => (p !== "" ? parseFloat(p) : null));
 
-  // Compute available amenities dynamically
   const availableAmenities = useMemo(() => {
     const amenitiesSet = new Set();
-    rooms
-      .filter(r => (minPrice == null || r.price >= minPrice) && (maxPrice == null || r.price <= maxPrice))
-      .forEach(r => r.amenities.forEach(a => amenitiesSet.add(a)));
+    fetchedRooms
+      .filter((r) => (minPrice == null || r.price >= minPrice) && (maxPrice == null || r.price <= maxPrice))
+      .forEach((r) => r.amenities && r.amenities.forEach((a) => amenitiesSet.add(a)));
     return Array.from(amenitiesSet);
-  }, [minPrice, maxPrice]);
+  }, [fetchedRooms, minPrice, maxPrice]);
 
-  // Filter rooms
   const filteredRooms = useMemo(() => {
-    let result = rooms;
-    result = result.filter(r => (minPrice == null || r.price >= minPrice) && (maxPrice == null || r.price <= maxPrice));
+    let result = fetchedRooms;
+    result = result.filter((r) => (minPrice == null || r.price >= minPrice) && (maxPrice == null || r.price <= maxPrice));
     if (filters.search) {
       const s = filters.search.toLowerCase();
-      result = result.filter(r => r.title.toLowerCase().includes(s) || r.hotel.toLowerCase().includes(s));
+      result = result.filter((r) => r.title.toLowerCase().includes(s) || r.hotel.toLowerCase().includes(s));
     }
-    const selectedAmenities = Object.keys(filters.amenities).filter(key => filters.amenities[key]);
+    const selectedAmenities = Object.keys(filters.amenities).filter((key) => filters.amenities[key]);
     if (selectedAmenities.length > 0) {
-      result = result.filter(r => selectedAmenities.every(a => r.amenities.includes(a)));
+      result = result.filter((r) => selectedAmenities.every((a) => r.amenities && r.amenities.includes(a)));
     }
     return result;
-  }, [filters, minPrice, maxPrice]);
+  }, [filters, fetchedRooms, minPrice, maxPrice]);
+
+  if (!selectedCategoryId)
+    return (
+      <Box sx={{ p: 4, textAlign: "center" }}>
+        <Typography variant="h6" color="text.secondary">
+          ⬅️ Please select a <b>Room Category</b> in the first step to view available rooms.
+        </Typography>
+      </Box>
+    );
+
+  if (loading)
+    return (
+      <Box sx={{ display: "flex", justifyContent: "center", p: 5 }}>
+        <CircularProgress color="secondary" />
+        <Typography sx={{ ml: 2, color: "text.secondary" }}>
+          Loading available rooms for <b>{categoryName || "Category"}</b>...
+        </Typography>
+      </Box>
+    );
+
+  if (error)
+    return (
+      <Typography color="error" align="center" sx={{ p: 5 }}>
+        {error}
+      </Typography>
+    );
 
   return (
     <RHFformProvider methods={methods}>
       <Box sx={{ maxWidth: 1320, mx: "auto" }}>
         {/* FILTER BAR */}
         <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap", mb: 4, alignItems: "center" }}>
-          {/* Search */}
           <TextFieldInput
             name="search"
-            control={methods.control}
+            control={control}
             placeholder="Search by hotel name"
             InputProps={{
               startAdornment: <SearchIcon sx={{ color: filters.search ? theme.palette.secondary.main : "grey.500" }} />,
@@ -97,14 +207,13 @@ export const SecondStep = ({ selectedRoom, setSelectedRoom }) => {
             }}
             sx={{ width: 200, minWidth: 200 }}
           />
-
           {/* Price Range */}
           <ClickAwayListener onClickAway={() => setPriceOpen(false)}>
             <Box ref={priceRef} sx={{ width: 200, minWidth: 200, position: "relative" }}>
               <Box
-                onClick={() => setPriceOpen(prev => !prev)}
+                onClick={() => setPriceOpen((prev) => !prev)}
                 sx={{
-                  border: `1px solid ${priceOpen ? theme.palette.secondary.main : "#ccc"}`,
+                  border: `1px solid ${(minPrice != null || maxPrice != null) || priceOpen ? theme.palette.secondary.main : "#ccc"}`,
                   borderRadius: 1,
                   px: 1,
                   py: 0.5,
@@ -117,23 +226,21 @@ export const SecondStep = ({ selectedRoom, setSelectedRoom }) => {
               >
                 <span>{minPrice != null || maxPrice != null ? `$${minPrice ?? ""} - $${maxPrice ?? ""}` : "Price range"}</span>
               </Box>
-
               {priceOpen && (
                 <Box sx={{ position: "absolute", top: "100%", left: 0, right: 0, mt: 1, p: 1, bgcolor: "background.paper", border: `1px solid ${theme.palette.divider}`, borderRadius: 1, zIndex: 10, display: "flex", gap: 1 }}>
-                  <TextFieldInput name="priceRange.0" control={methods.control} placeholder="Min" type="number" sx={{ flex: 1 }} />
-                  <TextFieldInput name="priceRange.1" control={methods.control} placeholder="Max" type="number" sx={{ flex: 1 }} />
+                  <TextFieldInput name="priceRange.0" control={control} placeholder="Min" type="number" sx={{ flex: 1 }} />
+                  <TextFieldInput name="priceRange.1" control={control} placeholder="Max" type="number" sx={{ flex: 1 }} />
                 </Box>
               )}
             </Box>
           </ClickAwayListener>
-
-          {/* Amenities Dropdown */}
+          {/* Amenities */}
           <ClickAwayListener onClickAway={() => setAmenitiesOpen(false)}>
             <Box ref={amenitiesRef} sx={{ width: 300, minWidth: 200, position: "relative" }}>
               <Box
-                onClick={() => setAmenitiesOpen(prev => !prev)}
+                onClick={() => setAmenitiesOpen((prev) => !prev)}
                 sx={{
-                  border: `1px solid ${Object.values(filters.amenities).some(v => v) || amenitiesOpen ? theme.palette.secondary.main : "#ccc"}`,
+                  border: `1px solid ${Object.values(filters.amenities).some((v) => v) || amenitiesOpen ? theme.palette.secondary.main : "#ccc"}`,
                   borderRadius: 1,
                   px: 1,
                   py: 0.5,
@@ -141,7 +248,7 @@ export const SecondStep = ({ selectedRoom, setSelectedRoom }) => {
                   minHeight: 40,
                   display: "flex",
                   alignItems: "center",
-                  color: Object.values(filters.amenities).some(v => v) ? theme.palette.secondary.main : "text.secondary",
+                  color: Object.values(filters.amenities).some((v) => v) ? theme.palette.secondary.main : "text.secondary",
                 }}
               >
                 Choose amenities
@@ -166,16 +273,14 @@ export const SecondStep = ({ selectedRoom, setSelectedRoom }) => {
                     overflowY: "auto",
                   }}
                 >
-                  {availableAmenities.map(a => (
+                  {availableAmenities.map((a) => (
                     <CheckboxInput
                       key={a}
                       name={`amenities.${a}`}
-                      control={methods.control}
+                      control={control}
                       label={a.charAt(0).toUpperCase() + a.slice(1)}
                       sx={{
-                        "& .Mui-checked": {
-                          color: theme.palette.secondary.main,
-                        },
+                        "& .Mui-checked": { color: theme.palette.secondary.main },
                       }}
                     />
                   ))}
@@ -190,56 +295,61 @@ export const SecondStep = ({ selectedRoom, setSelectedRoom }) => {
           Available Rooms ({filteredRooms.length})
         </Typography>
 
-        <Grid container spacing={2}>
-          {filteredRooms.map(room => (
-            <Grid key={room.id} item size={{xs:12}}>
-              <Card
-                sx={{
-                  display: "flex",
-                  height: 210,
-                  borderRadius: 1,
-                  overflow: "hidden",
-                  border: selectedRoom?.id === room.id ? `3px solid ${theme.palette.secondary.main}` : "2px solid #eee",
-                  transition: "0.3s",
-                }}
-              >
-                <CardMedia component="img" image={room.image} sx={{ width: 260, objectFit: "cover" }} />
-                <Box sx={{ flex: 1, p: 3, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
-                  <Box>
-                    <Typography variant="h6" sx={{ fontWeight: "bold", textTransform: "uppercase" }}>{room.title}</Typography>
-                    <Typography sx={{ opacity: 0.7, mt: 0.5 }}>{room.hotel}</Typography>
-                    <Typography sx={{ color: theme.palette.secondary.main, fontWeight: "bold", fontSize: "1.6rem", mt: 2 }}>${room.price}/night</Typography>
-                  </Box>
+        {filteredRooms.length === 0 ? (
+          <Typography variant="body1" sx={{ color: "text.secondary", mt: 3 }}>
+            No rooms found for <b>{categoryName}</b> matching your filters.
+          </Typography>
+        ) : (
+          <Grid container spacing={2}>
+            {filteredRooms.map((room) => (
+              <Grid key={room.id} size={{xs:12}}>
+                <Card
+                  sx={{
+                    display: "flex",
+                    height: 210,
+                    borderRadius: 1,
+                    overflow: "hidden",
+                   border: selectedRoom?.id === room.id ? `3px solid ${theme.palette.secondary.main}` : "2px solid #eee",
 
-                  {/* Amenities + Book Now inline */}
-                  <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 2, flexWrap: "wrap" }}>
-                    <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
-                      {room.amenities.map(a => {
-                        const Icon = amenityIcons[a];
-                        return (
-                          <Box key={a} sx={{ p: "3px 10px", bgcolor: theme.palette.secondary.light, borderRadius: "20px", display: "flex", alignItems: "center", gap: 0.5 }}>
-                            <Icon sx={{ fontSize: 16 }} />
-                            <Typography sx={{ fontSize: 12 }}>{a.charAt(0).toUpperCase() + a.slice(1)}</Typography>
-                          </Box>
-                        );
-                      })}
+                  }}
+                >
+                  <CardMedia component="img" image={room.image} sx={{ width: 260, objectFit: "cover" }} />
+                  <Box sx={{ flex: 1, p: 3, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+                    <Box>
+                      <Typography variant="h6" sx={{ fontWeight: "bold", textTransform: "uppercase" }}>{room.title}</Typography>
+                      <Typography sx={{ opacity: 0.7, mt: 0.5 }}>{room.hotel}</Typography>
+                      <Typography sx={{ color: theme.palette.secondary.main, fontWeight: "bold", fontSize: "1.6rem", mt: 2 }}>${room.price}/night</Typography>
                     </Box>
 
-                    <Button
-                      variant="contained"
-                      color="secondary"
-                      size="small"
-                      sx={{ fontWeight: "bold", px: 2, py: 0.7 }}
-                      onClick={() => setSelectedRoom(room)}
-                    >
-                      {selectedRoom?.id === room.id ? "Selected" : "Book Now"}
-                    </Button>
+                    <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: 2, flexWrap: "wrap" }}>
+                      <Box sx={{ display: "flex", gap: 1, flexWrap: "wrap" }}>
+                        {room.amenities && room.amenities.map((a) => {
+                          const Icon = amenityIcons[a];
+                          if (!Icon) return null;
+                          return (
+                            <Box key={a} sx={{ p: "3px 10px", bgcolor: theme.palette.secondary.light, borderRadius: "20px", display: "flex", alignItems: "center", gap: 0.5 }}>
+                              <Icon sx={{ fontSize: 16 }} />
+                              <Typography sx={{ fontSize: 12 }}>{a.charAt(0).toUpperCase() + a.slice(1)}</Typography>
+                            </Box>
+                          );
+                        })}
+                      </Box>
+                      <Button
+                        variant="contained"
+                        color="secondary"
+                        size="small"
+                        sx={{ fontWeight: "bold", px: 2, py: 0.7 }}
+                        onClick={() => setSelectedRoom(room)}
+                      >
+                        {selectedRoom?.id === room.id ? "Selected" : "Book Now"}
+                      </Button>
+                    </Box>
                   </Box>
-                </Box>
-              </Card>
-            </Grid>
-          ))}
-        </Grid>
+                </Card>
+              </Grid>
+            ))}
+          </Grid>
+        )}
       </Box>
     </RHFformProvider>
   );

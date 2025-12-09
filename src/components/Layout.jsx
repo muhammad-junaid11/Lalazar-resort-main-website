@@ -19,141 +19,167 @@ import EmailIcon from "@mui/icons-material/Email";
 import RoomIcon from "@mui/icons-material/Room";
 import { useTheme } from "@mui/material/styles";
 import { Link, useLocation, useNavigate } from "react-router-dom";
-import { auth, db } from "../services/Firebase/Firebase"; // make sure paths are correct
-import { collection, query, where, getDocs } from "firebase/firestore";
-import logo from "../assets/logo.jpg"; // adjust path
+import { auth, db } from "../services/Firebase/Firebase";
+import { doc, getDoc, collection, getDocs } from "firebase/firestore";
+import logo from "../assets/logo.jpg";
 import Cookies from "js-cookie";
 
-const Layout = ({ children,navColor = "transparent"}) => {
+const Layout = ({ children, navColor = "transparent" }) => {
   const theme = useTheme();
   const [mobileOpen, setMobileOpen] = useState(false);
   const [userName, setUserName] = useState(null);
   const [userMenuAnchorEl, setUserMenuAnchorEl] = useState(null);
+  const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [mobileRoomsOpen, setMobileRoomsOpen] = useState(false);
+  const [roomCategories, setRoomCategories] = useState([]);
   const location = useLocation();
   const navigate = useNavigate();
 
-  // Navbar logic
+  const toSlug = (text) =>
+    text.toLowerCase().replace(/\s+/g, "-").replace(/[^\w-]+/g, "");
+
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
+      setIsLoggedIn(!!user);
+      const token = Cookies.get("userToken");
       if (user) {
-        try {
-          const q = query(
-            collection(db, "users"),
-            where("userEmail", "==", user.email)
-          );
-          const querySnapshot = await getDocs(q);
-
-          if (!querySnapshot.empty) {
-            const userDoc = querySnapshot.docs[0];
-            const data = userDoc.data();
-            const fetchedUserName =
-              data.userName || user.email.split("@")[0] || "User";
-            setUserName(fetchedUserName);
-            localStorage.setItem("userName", fetchedUserName);
-          } else {
-            const defaultName = user.email.split("@")[0] || "User";
-            setUserName(defaultName);
-            localStorage.setItem("userName", defaultName);
-          }
-        } catch (err) {
-          const fallbackName = user.email.split("@")[0] || "User";
-          setUserName(fallbackName);
-          localStorage.setItem("userName", fallbackName);
+        const userDocRef = doc(db, "users", user.uid);
+        const userDoc = await getDoc(userDocRef);
+        if (userDoc.exists()) {
+          setUserName(userDoc.data().userName || "User");
+          localStorage.setItem("userName", userDoc.data().userName || "User");
         }
       } else {
-        setUserName(null);
-        localStorage.removeItem("userToken");
-        localStorage.removeItem("userName");
+        if (token) handleLogout();
       }
     });
 
     return () => unsubscribe();
   }, []);
 
-const handleLogout = () => {
-  auth.signOut();
-  Cookies.remove("userToken");
-  localStorage.removeItem("userName");
-  localStorage.removeItem("redirectAfterLogin"); // clear pending redirects
-  sessionStorage.clear();
-  setUserName(null);
-  setUserMenuAnchorEl(null);
-  navigate("/");
-};
+  const handleLogout = () => {
+    auth.signOut();
+    Cookies.remove("userToken");
+    localStorage.removeItem("userName");
+    localStorage.removeItem("redirectAfterLogin");
+    sessionStorage.clear();
+    setUserName(null);
+    setUserMenuAnchorEl(null);
+    navigate("/");
+  };
 
-
-  const handleUserMenuClick = (event) =>
-    setUserMenuAnchorEl(event.currentTarget);
+  const handleUserMenuClick = (event) => setUserMenuAnchorEl(event.currentTarget);
   const handleUserMenuClose = () => setUserMenuAnchorEl(null);
   const isSelected = (path) => location.pathname === path;
 
-  // Rooms dropdown
-  const roomsSubMenu = [
-    { label: "Deluxe Room", to: "/rooms/deluxe" },
-    { label: "Executive Room", to: "/rooms/executive" },
-    { label: "Family Room", to: "/rooms/family" },
-    { label: "Luxury Room", to: "/rooms/luxury" },
-  ];
+  const handleBookNow = () => {
+    if (isLoggedIn) {
+      navigate("/book");
+    } else {
+      localStorage.setItem("redirectAfterLogin", "/book");
+      navigate("/signin");
+    }
+  };
 
+  // Fetch room categories dynamically
+  useEffect(() => {
+    const fetchRoomCategories = async () => {
+      try {
+        const snapshot = await getDocs(collection(db, "roomCategory"));
+        const categories = snapshot.docs.map((doc) => ({
+          id: doc.id,
+          categoryName: doc.data().categoryName,
+        }));
+        setRoomCategories(categories);
+      } catch (err) {
+        console.error("Failed to fetch room categories", err);
+      }
+    };
+
+    fetchRoomCategories();
+  }, []);
+
+  // Dropdown for desktop
   const Dropdown = ({ selected, theme }) => {
-    const [anchorEl, setAnchorEl] = useState(null);
-    const open = Boolean(anchorEl);
-    const handleClick = (event) => setAnchorEl(event.currentTarget);
-    const handleClose = () => setAnchorEl(null);
+  const [anchorEl, setAnchorEl] = useState(null);
+  const open = Boolean(anchorEl);
 
-    return (
-      <>
-        <Button
-          id="rooms-button"
-          aria-controls={open ? "rooms-menu" : undefined}
-          aria-haspopup="true"
-          aria-expanded={open ? "true" : undefined}
-          onClick={handleClick}
-          endIcon={
-            <KeyboardArrowDownIcon
-              sx={{ color: theme.palette.primary.contrastText, fontSize: 20 }}
-            />
-          }
-          sx={{
+  const handleClick = (event) => {
+    setAnchorEl(anchorEl ? null : event.currentTarget);
+  };
+
+  const handleClose = () => {
+    setAnchorEl(null);
+  };
+
+  return (
+    <Box sx={{ display: "inline-block" }}>
+      <Button
+        id="rooms-button"
+        aria-controls={open ? "rooms-menu" : undefined}
+        aria-haspopup="true"
+        aria-expanded={open ? "true" : undefined}
+        onClick={handleClick}
+        endIcon={
+          <KeyboardArrowDownIcon
+            sx={{ color: theme.palette.primary.contrastText, fontSize: 20 }}
+          />
+        }
+        sx={{
+          color: theme.palette.primary.contrastText,
+          textTransform: "none",
+          fontSize: "16px",
+          padding: 0,
+          minWidth: "auto",
+          cursor: "pointer", // Added for pointer cursor
+          borderBottom: selected
+            ? `2px solid ${theme.palette.secondary.main}`
+            : "2px solid transparent",
+          ":hover": {
+            backgroundColor: "transparent",
+            borderBottom: `2px solid ${theme.palette.secondary.main}`,
             color: theme.palette.primary.contrastText,
-            textTransform: "none",
-            fontSize: "16px",
-            padding: 0,
-            minWidth: "auto",
-            borderBottom: selected
-              ? `2px solid ${theme.palette.secondary.main}`
-              : "2px solid transparent",
-            ":hover": {
-              backgroundColor: "transparent",
-              borderBottom: `2px solid ${theme.palette.secondary.main}`,
-              color: theme.palette.primary.contrastText,
-            },
-            transition: "border-bottom 0.3s ease",
+          },
+          transition: "border-bottom 0.3s ease",
+        }}
+      >
+        Rooms
+      </Button>
+
+      <Menu
+        id="rooms-menu"
+        anchorEl={anchorEl}
+        open={open}
+        onClose={handleClose}
+        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+        transformOrigin={{ vertical: "top", horizontal: "left" }}
+        MenuListProps={{
+          "aria-labelledby": "rooms-button",
+        }}
+      >
+        <MenuItem
+          onClick={() => {
+            handleClose();
+            navigate("/rooms");
           }}
         >
-          Rooms
-        </Button>
-        <Menu
-          id="rooms-menu"
-          anchorEl={anchorEl}
-          open={open}
-          onClose={handleClose}
-          MenuListProps={{ "aria-labelledby": "rooms-button" }}
-        >
-          {roomsSubMenu.map((item) => (
-            <MenuItem
-              key={item.to}
-              onClick={handleClose}
-              component={Link}
-              to={item.to}
-            >
-              {item.label}
-            </MenuItem>
-          ))}
-        </Menu>
-      </>
-    );
-  };
+          All Rooms
+        </MenuItem>
+        {roomCategories.map((item) => (
+          <MenuItem
+            key={item.id}
+            onClick={() => {
+              handleClose();
+              navigate(`/rooms/${toSlug(item.categoryName)}`);
+            }}
+          >
+            {item.categoryName}
+          </MenuItem>
+        ))}
+      </Menu>
+    </Box>
+  );
+};
 
   const NavItem = ({ to, children, selected, theme }) => (
     <Typography
@@ -178,13 +204,17 @@ const handleLogout = () => {
     </Typography>
   );
 
-  const MobileNavItem = ({ to, children, setMobileOpen }) => (
-    <MenuItem component={Link} to={to} onClick={() => setMobileOpen(false)}>
+  const MobileNavItem = ({ to, children, onClick }) => (
+    <MenuItem
+      component={to ? Link : "div"}
+      to={to}
+      onClick={onClick}
+      sx={{ display: "flex", flexDirection: "column" }}
+    >
       {children}
     </MenuItem>
   );
 
-  // Footer
   const currentYear = new Date().getFullYear();
 
   return (
@@ -193,10 +223,13 @@ const handleLogout = () => {
       <AppBar
         position="absolute"
         sx={{
-          background: navColor === "transparent" ? "transparent" : theme.palette[navColor].main,
+          background:
+            navColor === "transparent"
+              ? "transparent"
+              : theme.palette[navColor].main,
           boxShadow: "none",
           px: { xs: 2, md: 12 },
-          py:{md:1},
+          py: { md: 1 },
           zIndex: theme.zIndex.appBar + 1,
         }}
       >
@@ -224,7 +257,7 @@ const handleLogout = () => {
               alt="logo"
               sx={{
                 height: { xs: 60, md: 70 },
-                p:0.5,
+                p: 0.5,
                 width: "auto",
                 mt: 1,
                 border: "3px solid white",
@@ -236,11 +269,7 @@ const handleLogout = () => {
               <NavItem to="/" selected={isSelected("/")} theme={theme}>
                 Home
               </NavItem>
-              <NavItem
-                to="/about"
-                selected={isSelected("/about")}
-                theme={theme}
-              >
+              <NavItem to="/about" selected={isSelected("/about")} theme={theme}>
                 About
               </NavItem>
               <NavItem
@@ -265,6 +294,27 @@ const handleLogout = () => {
               >
                 Contact
               </NavItem>
+
+              <Typography
+                onClick={handleBookNow}
+                sx={{
+                  cursor: "pointer",
+                  color: theme.palette.primary.contrastText,
+                  textDecoration: "none",
+                  fontSize: "16px",
+                  pb: 0.5,
+                  borderBottom: isSelected("/book")
+                    ? `2px solid ${theme.palette.secondary.main}`
+                    : "2px solid transparent",
+                  ":hover": {
+                    borderBottom: `2px solid ${theme.palette.secondary.main}`,
+                    color: theme.palette.primary.contrastText,
+                  },
+                  transition: "border-bottom 0.3s ease",
+                }}
+              >
+                Book Now
+              </Typography>
             </Box>
           </Box>
 
@@ -273,9 +323,7 @@ const handleLogout = () => {
               <>
                 <Button
                   id="user-menu-button"
-                  aria-controls={
-                    Boolean(userMenuAnchorEl) ? "user-menu" : undefined
-                  }
+                  aria-controls={Boolean(userMenuAnchorEl) ? "user-menu" : undefined}
                   aria-haspopup="true"
                   aria-expanded={Boolean(userMenuAnchorEl) ? "true" : undefined}
                   onClick={handleUserMenuClick}
@@ -316,6 +364,7 @@ const handleLogout = () => {
                 <Button
                   component={Link}
                   to="/signin"
+                  onClick={() => localStorage.removeItem("redirectAfterLogin")}
                   sx={{
                     color: theme.palette.primary.contrastText,
                     border: `1px solid ${theme.palette.primary.contrastText}`,
@@ -353,35 +402,89 @@ const handleLogout = () => {
             <MenuIcon sx={{ color: theme.palette.primary.contrastText }} />
           </IconButton>
 
+          {/* Mobile Drawer */}
           <Drawer
             anchor="right"
             open={mobileOpen}
             onClose={() => setMobileOpen(false)}
           >
             <Box sx={{ width: 250, p: 2 }}>
-              <MobileNavItem to="/" setMobileOpen={setMobileOpen}>
+              <MobileNavItem to="/" onClick={() => setMobileOpen(false)}>
                 Home
               </MobileNavItem>
-              <MobileNavItem to="/about" setMobileOpen={setMobileOpen}>
+              <MobileNavItem to="/about" onClick={() => setMobileOpen(false)}>
                 About
               </MobileNavItem>
-              <MobileNavItem to="/activities" setMobileOpen={setMobileOpen}>
+              <MobileNavItem to="/activities" onClick={() => setMobileOpen(false)}>
                 Activities
               </MobileNavItem>
-              <MobileNavItem to="/rooms" setMobileOpen={setMobileOpen}>
-                Rooms
-              </MobileNavItem>
-              <MobileNavItem to="/services" setMobileOpen={setMobileOpen}>
+
+              <Box>
+                <Button
+                  onClick={() => setMobileRoomsOpen(!mobileRoomsOpen)}
+                  sx={{
+                    color: theme.palette.text.primary,
+                    textTransform: "none",
+                    fontWeight: "bold",
+                    justifyContent: "space-between",
+                    width: "100%",
+                  }}
+                  endIcon={<KeyboardArrowDownIcon />}
+                >
+                  Rooms
+                </Button>
+                {mobileRoomsOpen && (
+                  <Box sx={{ pl: 2 }}>
+                    {roomCategories.map((item) => (
+                      <MobileNavItem
+                        key={item.id}
+                        to={`/rooms/${toSlug(item.categoryName)}`}
+                        onClick={() => setMobileOpen(false)}
+                      >
+                        {item.categoryName}
+                      </MobileNavItem>
+                    ))}
+                  </Box>
+                )}
+                {!mobileRoomsOpen && (
+                  <Box sx={{ pl: 2, mt: 1 }}>
+                    <Button
+                      onClick={() => {
+                        setMobileOpen(false);
+                        navigate("/rooms");
+                      }}
+                      sx={{
+                        textTransform: "none",
+                        fontWeight: "bold",
+                        color: theme.palette.primary.main,
+                      }}
+                    >
+                      Go to Rooms Main Page
+                    </Button>
+                  </Box>
+                )}
+              </Box>
+
+              <MobileNavItem to="/services" onClick={() => setMobileOpen(false)}>
                 Services
               </MobileNavItem>
-              <MobileNavItem to="/contact" setMobileOpen={setMobileOpen}>
+              <MobileNavItem to="/contact" onClick={() => setMobileOpen(false)}>
                 Contact
+              </MobileNavItem>
+              <MobileNavItem
+                to="#"
+                onClick={() => {
+                  setMobileOpen(false);
+                  handleBookNow();
+                }}
+              >
+                Book Now
               </MobileNavItem>
 
               {userName ? (
                 <MobileNavItem
                   to="/"
-                  setMobileOpen={() => {
+                  onClick={() => {
                     handleLogout();
                     setMobileOpen(false);
                   }}
@@ -390,10 +493,10 @@ const handleLogout = () => {
                 </MobileNavItem>
               ) : (
                 <>
-                  <MobileNavItem to="/signin" setMobileOpen={setMobileOpen}>
+                  <MobileNavItem to="/signin" onClick={() => setMobileOpen(false)}>
                     Sign In
                   </MobileNavItem>
-                  <MobileNavItem to="/signup" setMobileOpen={setMobileOpen}>
+                  <MobileNavItem to="/signup" onClick={() => setMobileOpen(false)}>
                     Sign Up
                   </MobileNavItem>
                 </>
@@ -404,13 +507,7 @@ const handleLogout = () => {
       </AppBar>
 
       {/* Page content */}
-      <Box
-        sx={{
-          flex: 1,
-          // ❌ REMOVE the padding/margin compensation here. We move it to HomePage.jsx
-        }}
-        key={location.pathname}  // ⭐ ADD THIS: Forces remounting of children on path change
-      >
+      <Box sx={{ flex: 1 }} key={location.pathname}>
         {children}
       </Box>
 
@@ -418,10 +515,7 @@ const handleLogout = () => {
       <Box sx={{ bgcolor: "white", pt: 10 }}>
         <Container maxWidth="lg">
           <Grid container spacing={6} justifyContent="center">
-            <Grid
-              size={{ xs: 12, md: 4 }}
-              textAlign={{ xs: "center", md: "left" }}
-            >
+            <Grid size={{ xs: 12, md: 4 }} textAlign={{ xs: "center", md: "left" }}>
               <Box
                 component="img"
                 src={logo}
@@ -437,10 +531,7 @@ const handleLogout = () => {
               />
             </Grid>
 
-            <Grid
-              size={{ xs: 12, md: 4 }}
-              textAlign={{ xs: "center", md: "left" }}
-            >
+            <Grid size={{ xs: 12, md: 4 }} textAlign={{ xs: "center", md: "left" }}>
               <Typography
                 variant="h6"
                 sx={{ fontWeight: 700, mb: 2, fontFamily: "serif" }}
@@ -463,10 +554,7 @@ const handleLogout = () => {
               </Box>
             </Grid>
 
-            <Grid
-              size={{ xs: 12, md: 4 }}
-              textAlign={{ xs: "center", md: "left" }}
-            >
+            <Grid size={{ xs: 12, md: 4 }} textAlign={{ xs: "center", md: "left" }}>
               <Typography
                 variant="h6"
                 sx={{ fontWeight: 700, mb: 2, fontFamily: "serif" }}

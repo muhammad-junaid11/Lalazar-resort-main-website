@@ -12,7 +12,7 @@ import { useForm } from "react-hook-form";
 import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
 import { AdapterDateFns } from "@mui/x-date-pickers/AdapterDateFns";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { collection, addDoc } from "firebase/firestore";
+import { collection, addDoc, doc, setDoc } from "firebase/firestore";
 import { db, serverTimestamp, auth } from "../../services/Firebase/Firebase";
 import { useNavigate } from "react-router-dom";
 import logo from "../../assets/logo.jpg";
@@ -88,30 +88,56 @@ const SignUp = () => {
     },
   };
 
-  const onSubmit = async (data) => {
-    setIsLoading(true);
-    try {
-      await createUserWithEmailAndPassword(auth, data.userEmail, data.password);
+const onSubmit = async (data) => {
+  setIsLoading(true);
+  try {
+    // 1️⃣ Create Auth user
+    const userCredential = await createUserWithEmailAndPassword(
+      auth,
+      data.userEmail,
+      data.password
+    );
 
-      await addDoc(collection(db, "users"), {
-        userName: data.userName,
-        userEmail: data.userEmail,
-        password: data.password,
-        number: data.number,
-        address: data.address,
-        dob: data.dob ? new Date(data.dob) : null,
-        gender: data.gender,
-        createdAt: serverTimestamp(),
-      });
+    const user = userCredential.user;
+    const uid = user.uid; // User UID
 
-      console.log("User registered successfully!");
-      navigate("/signin");
-    } catch (error) {
-      console.error("Error registering user:", error.message);
-    } finally {
-      setIsLoading(false);
-    }
-  };
+    // 2️⃣ Store user data in Firestore using UID
+    await setDoc(doc(db, "users", uid), {
+      userName: data.userName,
+      userEmail: data.userEmail,
+      number: data.number,
+      address: data.address,
+      dob: data.dob ? new Date(data.dob) : null,
+      gender: data.gender,
+      createdAt: serverTimestamp(),
+    });
+
+    // 3️⃣ Get token & store BOTH UID and Token in cookies
+    const token = await user.getIdToken();
+
+    Cookies.set("userUID", uid, {
+      secure: true,
+      sameSite: "Lax",
+      expires: 1,
+    });
+
+    Cookies.set("userToken", token, {
+      secure: true,
+      sameSite: "Lax",
+      expires: 1,
+    });
+
+    console.log("User registered successfully!");
+    navigate("/signin");
+  } catch (error) {
+    console.error("Error registering user:", error.message);
+    alert(error.message);
+  } finally {
+    setIsLoading(false);
+  }
+};
+
+
 
   return (
     <LocalizationProvider dateAdapter={AdapterDateFns}>

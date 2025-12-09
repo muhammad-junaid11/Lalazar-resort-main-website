@@ -11,6 +11,9 @@ import Services from "./pages/Services/Services";
 import ContactUs from "./pages/Contact/ContactUs";
 import FirstStep from "./pages/BookingForm/FirstStep";
 import BookingLayout from "./pages/BookingForm/BookingLayout";
+import ProtectedRoute from "./pages/BookingForm/ProtectedRoute";
+import Rooms from "./pages/Rooms/Rooms";
+import RoomsByCategory from "./pages/Rooms/RoomsByCategory";
 function App() {
   return (
     <>
@@ -56,16 +59,18 @@ function App() {
             </Layout>
           }
         />
-        <Route
-          path="/book"
-          element={
-            <Layout navColor="secondary">
-              <BookingLayout />
-            </Layout>
-          }
-        />
-        {/* <Route path="/rooms" element={<Layout><Rooms /></Layout>} /> */}
-        {/* <Route path="/rooms/deluxe" element={<Layout><DeluxeRoom /></Layout>} /> */}
+         <Route
+    path="/book"
+    element={
+      <ProtectedRoute>
+        <Layout navColor="secondary">
+          <BookingLayout />
+        </Layout>
+      </ProtectedRoute>
+    }
+  />
+        { <Route path="/rooms" element={<Layout><Rooms /></Layout>} /> }
+         <Route path="/rooms/:categoryName" element={<Layout><RoomsByCategory /></Layout>} />
         <Route path="/signin" element={<SignIn />} />
         <Route path="/signup" element={<SignUp />} />
       </Routes>

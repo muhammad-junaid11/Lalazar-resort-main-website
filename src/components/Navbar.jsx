@@ -133,17 +133,24 @@ const Navbar = ({ mobileOpen, setMobileOpen }) => {
       if (user) {
         // User is signed in. Query Firestore for the document where userEmail matches the user's email.
         try {
-          console.log("Querying Firestore for userName with email:", user.email); // Add logging for debugging
-          const q = query(collection(db, "users"), where("userEmail", "==", user.email));
+          console.log(
+            "Querying Firestore for userName with email:",
+            user.email
+          ); // Add logging for debugging
+          const q = query(
+            collection(db, "users"),
+            where("userEmail", "==", user.email)
+          );
           const querySnapshot = await getDocs(q);
-          
+
           if (!querySnapshot.empty) {
             // Take the first matching document (assuming one per email)
             const userDoc = querySnapshot.docs[0];
             const data = userDoc.data();
-            const fetchedUserName = data.userName || user.email.split("@")[0] || "User";
+            const fetchedUserName =
+              data.userName || user.email.split("@")[0] || "User";
             console.log("Fetched userName from Firestore:", fetchedUserName); // Confirm fetch success
-            
+
             // Set the state and update localStorage with the correct name
             setUserName(fetchedUserName);
             localStorage.setItem("userName", fetchedUserName);
@@ -199,7 +206,11 @@ const Navbar = ({ mobileOpen, setMobileOpen }) => {
   return (
     <AppBar
       position="absolute"
-      sx={{ background: "transparent", boxShadow: "none", px: { xs: 2, md: 12 } }}
+      sx={{
+        background: "transparent",
+        boxShadow: "none",
+        px: { xs: 2, md: 12 },
+      }}
     >
       <Toolbar
         sx={{
@@ -210,7 +221,9 @@ const Navbar = ({ mobileOpen, setMobileOpen }) => {
         }}
       >
         {/* Left: Logo + Nav */}
-        <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 0, md: 5 } }}>
+        <Box
+          sx={{ display: "flex", alignItems: "center", gap: { xs: 0, md: 5 } }}
+        >
           <Box
             component="img"
             src={logo}
@@ -246,6 +259,13 @@ const Navbar = ({ mobileOpen, setMobileOpen }) => {
             >
               Contact
             </NavItem>
+            <NavItem
+              to="/booking"
+              selected={isSelected("/booking")}
+              theme={theme}
+            >
+              Book Now
+            </NavItem>
           </Box>
         </Box>
 
@@ -256,13 +276,18 @@ const Navbar = ({ mobileOpen, setMobileOpen }) => {
               <>
                 <Button
                   id="user-menu-button"
-                  aria-controls={Boolean(userMenuAnchorEl) ? "user-menu" : undefined}
+                  aria-controls={
+                    Boolean(userMenuAnchorEl) ? "user-menu" : undefined
+                  }
                   aria-haspopup="true"
                   aria-expanded={Boolean(userMenuAnchorEl) ? "true" : undefined}
                   onClick={handleUserMenuClick}
                   endIcon={
                     <KeyboardArrowDownIcon
-                      sx={{ color: theme.palette.primary.contrastText, fontSize: 20 }}
+                      sx={{
+                        color: theme.palette.primary.contrastText,
+                        fontSize: 20,
+                      }}
                     />
                   }
                   sx={{
