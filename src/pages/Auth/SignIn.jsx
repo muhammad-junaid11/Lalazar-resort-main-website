@@ -91,7 +91,7 @@ const onSubmit = async (data) => {
     );
     const user = userCredential.user;
 
-    Cookies.set("userUID", user.uid, { secure: true, sameSite: "Lax", expires: 1 });
+    Cookies.set("userUID", user.uid, { sameSite: "Lax", expires: 1 });
     const token = await user.getIdToken();
     Cookies.set("userToken", token, { secure: true, sameSite: "Lax", expires: 1 });
 

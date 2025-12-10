@@ -6,14 +6,13 @@ import { collection, getDocs } from "firebase/firestore";
 import { db } from "../../services/Firebase/Firebase"; 
 
 import RHFformProvider from "../../components/Form/RHFformProvider";
-import DatePickerInput from "../../components/Form/DatePickerInput";
+import DateTimePickerInput from "../../components/Form/DateTimePickerInput";
 import SelectInput from "../../components/Form/SelectInput";
 import TextFieldInput from "../../components/Form/TextFieldInput";
 
 const FirstStep = ({ onChange, defaultValues = {} }) => {
   const theme = useTheme();
   const [cityOptions, setCityOptions] = useState([]);
-  const [roomOptions, setRoomOptions] = useState([]);
 
   const methods = useForm({
     defaultValues: {
@@ -21,7 +20,6 @@ const FirstStep = ({ onChange, defaultValues = {} }) => {
       checkOutDate: null,
       numGuests: "",
       numRooms: "",
-      roomCategory: "",
       city: "",
       airportTransfer: false,
       ...defaultValues,
@@ -32,28 +30,23 @@ const FirstStep = ({ onChange, defaultValues = {} }) => {
   const checkInDate = methods.watch("checkInDate");
   const checkOutDate = methods.watch("checkOutDate");
 
-  // Fetch cities and room categories from Firebase
+  // Fetch cities from Firebase
   useEffect(() => {
     const fetchCities = async () => {
-      const snapshot = await getDocs(collection(db, "city"));
-      const cities = snapshot.docs.map((doc) => ({
-        label: doc.data().cityName,
-        value: doc.id,
-      }));
-      setCityOptions(cities);
-    };
-
-    const fetchRoomCategories = async () => {
-      const snapshot = await getDocs(collection(db, "roomCategory"));
-      const categories = snapshot.docs.map((doc) => ({
-        label: doc.data().categoryName,
-        value: doc.id,
-      }));
-      setRoomOptions(categories);
+      try {
+        const snapshot = await getDocs(collection(db, "city"));
+        const cities = snapshot.docs.map((doc) => ({
+          label: doc.data().cityName,
+          value: doc.id,
+        }));
+        setCityOptions(cities);
+      } catch (err) {
+        console.error("Error fetching cities:", err);
+        setCityOptions([]);
+      }
     };
 
     fetchCities();
-    fetchRoomCategories();
   }, []);
 
   // Update parent formData whenever any field changes
@@ -64,12 +57,12 @@ const FirstStep = ({ onChange, defaultValues = {} }) => {
     return () => subscription.unsubscribe();
   }, [methods, onChange]);
 
-  // Auto-adjust checkout if it's before check-in
+  // Auto-adjust checkout if it's before or equal to check-in (considering time)
   useEffect(() => {
     if (checkInDate && checkOutDate && checkOutDate <= checkInDate) {
       methods.setValue(
         "checkOutDate",
-        new Date(checkInDate.getTime() + 24 * 60 * 60 * 1000)
+        new Date(checkInDate.getTime() + 60 * 60 * 1000) // 1 hour after check-in
       );
     }
   }, [checkInDate, checkOutDate, methods]);
@@ -120,26 +113,25 @@ const FirstStep = ({ onChange, defaultValues = {} }) => {
       <Grid container spacing={0.5}>
         <Grid size={{ xs: 12, md: 5 }}>
           <Typography sx={{ fontWeight: "bold", mb: 1 }}>
-            Select check-in and check-out
+            Select check-in and check-out (with exact time)
           </Typography>
-
           <Box sx={{ display: "flex", gap: 0.5, flexDirection: "column" }}>
-            <DatePickerInput
+            <DateTimePickerInput
               name="checkInDate"
-              label="Check-in Date"
-              rules={{ required: "Check-in date is required" }}
-              minDate={new Date()}
+              label="Check-in Date & Time"
+              rules={{ required: "Check-in date and time are required" }}
+              minDateTime={new Date()} // Prevent past dates/times
               sx={inputSx}
               control={methods.control}
             />
 
-            <DatePickerInput
+            <DateTimePickerInput
               name="checkOutDate"
-              label="Check-out Date"
-              rules={{ required: "Check-out date is required" }}
-              minDate={
+              label="Check-out Date & Time"
+              rules={{ required: "Check-out date and time are required" }}
+              minDateTime={
                 checkInDate
-                  ? new Date(checkInDate.getTime() + 24 * 60 * 60 * 1000)
+                  ? new Date(checkInDate.getTime() + 60 * 60 * 1000) // At least 1 hour after
                   : new Date()
               }
               disabled={!checkInDate}
@@ -178,14 +170,6 @@ const FirstStep = ({ onChange, defaultValues = {} }) => {
               label="Choose city"
               options={cityOptions}
               rules={{ required: "City is required" }}
-              sx={inputSx}
-            />
-
-            <SelectInput
-              name="roomCategory"
-              label="Choose room category"
-              options={roomOptions}
-              rules={{ required: "Room category is required" }}
               sx={inputSx}
             />
           </Box>
