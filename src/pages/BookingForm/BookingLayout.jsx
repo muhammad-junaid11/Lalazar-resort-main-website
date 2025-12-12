@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Typography,
@@ -10,25 +10,18 @@ import {
   Divider,
 } from "@mui/material";
 
+import { useNavigate, useLocation } from "react-router-dom";
+import { collection, addDoc, serverTimestamp, getDoc, doc } from "firebase/firestore";
+import { auth, db } from "../../services/Firebase/Firebase";
+
 import FirstStep from "./FirstStep";
 import SecondStep from "./SecondStep";
 import ThirdStep from "./ThirdStep";
-
-import { collection, addDoc, serverTimestamp, getDoc, doc } from "firebase/firestore";
-import { auth, db } from "../../services/Firebase/Firebase";
-import { useNavigate } from "react-router-dom";
 
 const verticalSteps = [
   { label: "Booking Details", description: `Set your destination, dates, and number of guests.` },
   { label: "Select Room", description: 'Choose your preferred room type, view, and rate.' },
   { label: "Review & Payment", description: `Review summary and confirm booking with payment.` },
-];
-
-// Payment options for Step 3
-const paymentAccounts = [
-  { id: 1, name: "EasyPaisa", account: "2796871257", icon: null },
-  { id: 2, name: "JazzCash", account: "2796871257", icon: null },
-  { id: 3, name: "MasterCard", account: "2796871257", icon: null },
 ];
 
 const VerticalLinearStepper = ({ theme, activeStep }) => {
@@ -48,9 +41,7 @@ const VerticalLinearStepper = ({ theme, activeStep }) => {
       <Stepper activeStep={activeStep} orientation="vertical" sx={verticalStepperSx}>
         {verticalSteps.map((step, index) => (
           <Step key={step.label}>
-            <StepLabel
-              optional={index === verticalSteps.length - 1 ? <Typography variant="caption">Final Step</Typography> : null}
-            >
+            <StepLabel optional={index === verticalSteps.length - 1 ? <Typography variant="caption">Final Step</Typography> : null}>
               {step.label}
             </StepLabel>
             <Box sx={{ pl: 4, mt: 1 }}>
@@ -66,19 +57,31 @@ const VerticalLinearStepper = ({ theme, activeStep }) => {
 const BookingLayout = () => {
   const theme = useTheme();
   const navigate = useNavigate();
+  const location = useLocation();
+  
+  const query = new URLSearchParams(location.search);
+  const preselectedRoomId = query.get("roomId");
+  const preselectedCategoryId = query.get("categoryId");
+  const preselectedCityId = query.get("cityId");
+
   const [step, setStep] = useState(1);
   const totalSteps = 3;
 
   const [formData, setFormData] = useState({
-    firstStep: {},
+    firstStep: {
+      city: preselectedCityId || "",
+      checkInDate: null,
+      checkOutDate: null,
+      numGuests: "",
+      numRooms: "",
+    },
     secondStep: {
-      selectedCategoryId: null,
-      selectedRooms: [],
+      selectedCategoryId: preselectedCategoryId || null,
+      selectedRooms: preselectedRoomId ? [{ id: preselectedRoomId }] : [],
     },
     thirdStep: {},
   });
 
-  // Lifted states
   const [selectedPayment, setSelectedPayment] = useState(null);
   const [receipt, setReceipt] = useState(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
@@ -117,65 +120,36 @@ const BookingLayout = () => {
   const updateStepData = (stepName, key, value) => {
     setFormData((prev) => ({
       ...prev,
-      [stepName]: {
-        ...prev[stepName],
-        [key]: value,
-      },
+      [stepName]: { ...prev[stepName], [key]: value },
     }));
   };
 
   const handleSubmit = async () => {
     try {
       const user = auth.currentUser;
-      if (!user) {
-        alert("You must be signed in to make a booking!");
-        return;
-      }
+      if (!user) { alert("You must be signed in to make a booking!"); return; }
 
-      // Fetch user email dynamically
       const userDoc = await getDoc(doc(db, "users", user.uid));
-      if (userDoc.exists()) {
-        setUserEmail(userDoc.data().userEmail || userDoc.data().email || "");
-      }
+      if (userDoc.exists()) setUserEmail(userDoc.data().userEmail || userDoc.data().email || "");
 
       const { checkInDate, checkOutDate, numGuests } = formData.firstStep;
       const roomIds = formData.secondStep.selectedRooms.map((r) => r.id);
 
-      const paymentMethodMap = {
-        1: "EasyPaisa",
-        2: "JazzCash",
-        3: "MasterCard",
-      };
+      const paymentMethodMap = { 1: "EasyPaisa", 2: "JazzCash", 3: "MasterCard" };
       const paymentMethodName = paymentMethodMap[selectedPayment];
+      if (!paymentMethodName) { alert("Please select a payment method!"); return; }
 
-      if (!paymentMethodName) {
-        alert("Please select a payment method before submitting!");
-        return;
-      }
-
-      // Create booking doc
       const bookingRef = await addDoc(collection(db, "bookings"), {
-        checkInDate,
-        checkOutDate,
-        paymentMethod: paymentMethodName,
-        persons: Number(numGuests),
-        roomId: roomIds,
-        status: "pending",
-        userId: user.uid,
+        checkInDate, checkOutDate, paymentMethod: paymentMethodName,
+        persons: Number(numGuests), roomId: roomIds, status: "pending", userId: user.uid,
       });
 
-      // Create payment doc
       await addDoc(collection(db, "payment"), {
-        bookingId: bookingRef.id,
-        label: "Advance 1",
-        paidAmount: 0,
-        paymentDate: serverTimestamp(),
-        paymentType: paymentMethodName,
-        receiptPath: receipt || "",
-        status: "Pending",
+        bookingId: bookingRef.id, label: "Advance 1", paidAmount: 0,
+        paymentDate: serverTimestamp(), paymentType: paymentMethodName,
+        receiptPath: receipt || "", status: "Pending",
       });
 
-      // Show confirmation page
       setShowConfirmation(true);
     } catch (err) {
       console.error("Error submitting booking:", err);
@@ -186,13 +160,7 @@ const BookingLayout = () => {
   const renderStep = () => {
     switch (step) {
       case 1:
-        return (
-          <FirstStep
-            defaultValues={formData.firstStep}
-            onChange={(data) => setFormData((prev) => ({ ...prev, firstStep: data }))}
-          />
-        );
-
+        return <FirstStep defaultValues={formData.firstStep} onChange={(data) => setFormData(prev => ({ ...prev, firstStep: data }))} />;
       case 2:
         return (
           <SecondStep
@@ -206,128 +174,32 @@ const BookingLayout = () => {
             checkOutDate={formData.firstStep.checkOutDate}
           />
         );
-
       case 3:
-        return (
-          <ThirdStep 
-            formData={formData} 
-            selectedPayment={selectedPayment} 
-            setSelectedPayment={setSelectedPayment} 
-            receipt={receipt}
-            setReceipt={setReceipt}
-          />
-        );
-
+        return <ThirdStep formData={formData} selectedPayment={selectedPayment} setSelectedPayment={setSelectedPayment} receipt={receipt} setReceipt={setReceipt} />;
       default:
         return null;
     }
   };
 
-  if (showConfirmation) {
-    return (
-      <Box
-        sx={{
-          mt: 30,
-          mb:10,
-          display: "flex",
-          flexDirection: "column",
-          alignItems: "center",
-          justifyContent: "center",
-          textAlign: "center",
-        }}
-      >
-        <Typography variant="h4" sx={{ fontWeight: "bold", mb: 2 }}>
-          Thank You for Choosing Lalazar Resort!
-        </Typography>
-        <Typography variant="body1" sx={{ mb: 4 }}>
-          We will contact you through your email: <strong>{userEmail}</strong>
-        </Typography>
-        <Button
-          variant="contained"
-          sx={{
-            backgroundColor: theme.palette.secondary.main,
-            "&:hover": { backgroundColor: theme.palette.secondary.dark },
-            color: "#fff",
-            fontWeight: "bold",
-            px: 5,
-            py: 1.5,
-            borderRadius: 2,
-          }}
-          onClick={() => navigate("/")}
-        >
-          Close
-        </Button>
-        <Divider sx={{ width: "50%", mb: 2,mt:9 }} />
-      </Box>
-    );
-  }
+  if (showConfirmation) return (
+    <Box sx={{ mt: 30, mb:10, display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", textAlign: "center" }}>
+      <Typography variant="h4" sx={{ fontWeight: "bold", mb: 2 }}>Thank You for Choosing Lalazar Resort!</Typography>
+      <Typography variant="body1" sx={{ mb: 4 }}>We will contact you through your email: <strong>{userEmail}</strong></Typography>
+      <Button variant="contained" sx={{ backgroundColor: theme.palette.secondary.main, "&:hover": { backgroundColor: theme.palette.secondary.dark }, color: "#fff", fontWeight: "bold", px: 5, py: 1.5, borderRadius: 2 }} onClick={() => navigate("/")}>Close</Button>
+      <Divider sx={{ width: "50%", mb: 2, mt:9 }} />
+    </Box>
+  );
 
   return (
     <Box sx={{ display: "flex", justifyContent: "center", p: { xs: 2, sm: 4 }, minHeight: "100vh", width: "100%" }}>
       <Box sx={{ width: "100%", maxWidth: 1300, mt: 15, display: 'flex' }}>
         <VerticalLinearStepper theme={theme} activeStep={step - 1} />
-
         <Box sx={{ flexGrow: 1, maxWidth: 1000 }}>
-          <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
-            <Typography variant="h3" sx={{ fontWeight: 600, fontFamily: "serif" }} />
-          </Box>
-
           <Box sx={{ mb: 3 }}>{renderStep()}</Box>
-
           <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
-            {step > 1 ? (
-              <Button
-                variant="contained"
-                onClick={handleBack}
-                sx={{
-                  backgroundColor: theme.palette.secondary.main,
-                  "&:hover": { backgroundColor: theme.palette.secondary.dark },
-                  color: "white",
-                  fontWeight: "bold",
-                  py: 1.2,
-                  px: 5,
-                  borderRadius: 2,
-                }}
-              >
-                Back
-              </Button>
-            ) : <Box />}
-
-            {step < totalSteps ? (
-              <Button
-                variant="contained"
-                onClick={handleNext}
-                sx={{
-                  backgroundColor: theme.palette.secondary.main,
-                  "&:hover": { backgroundColor: theme.palette.secondary.dark },
-                  color: "white",
-                  fontWeight: "bold",
-                  py: 1.2,
-                  px: 5,
-                  borderRadius: 2,
-                }}
-              >
-                Next
-              </Button>
-            ) : (
-              <Button
-                variant="contained"
-                onClick={handleSubmit}
-                sx={{
-                  backgroundColor: theme.palette.secondary.main,
-                  "&:hover": { backgroundColor: theme.palette.secondary.dark },
-                  color: "white",
-                  fontWeight: "bold",
-                  py: 1.2,
-                  px: 5,
-                  borderRadius: 2,
-                }}
-              >
-                Submit
-              </Button>
-            )}
+            {step > 1 ? <Button variant="contained" onClick={handleBack} sx={{ backgroundColor: theme.palette.secondary.main, "&:hover": { backgroundColor: theme.palette.secondary.dark }, color: "white", fontWeight: "bold", py: 1.2, px: 5, borderRadius: 2 }}>Back</Button> : <Box />}
+            {step < totalSteps ? <Button variant="contained" onClick={handleNext} sx={{ backgroundColor: theme.palette.secondary.main, "&:hover": { backgroundColor: theme.palette.secondary.dark }, color: "white", fontWeight: "bold", py: 1.2, px: 5, borderRadius: 2 }}>Next</Button> : <Button variant="contained" onClick={handleSubmit} sx={{ backgroundColor: theme.palette.secondary.main, "&:hover": { backgroundColor: theme.palette.secondary.dark }, color: "white", fontWeight: "bold", py: 1.2, px: 5, borderRadius: 2 }}>Submit</Button>}
           </Box>
-
           <Divider sx={{ mb: 3, borderColor: "rgba(0,0,0,0.2)" }} />
         </Box>
       </Box>

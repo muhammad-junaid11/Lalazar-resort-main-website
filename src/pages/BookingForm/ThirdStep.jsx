@@ -18,6 +18,8 @@ const ThirdStep = ({ formData, selectedPayment, setSelectedPayment }) => {
   const [userLoading, setUserLoading] = useState(true);
   const [userError, setUserError] = useState("");
 
+  const [roomsWithPrice, setRoomsWithPrice] = useState([]);
+
   // Fetch user details
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
@@ -58,12 +60,34 @@ const ThirdStep = ({ formData, selectedPayment, setSelectedPayment }) => {
     return () => unsubscribe();
   }, []);
 
+  // Fetch full room details if prefilled from AllRooms
+  useEffect(() => {
+    const fetchRooms = async () => {
+      try {
+        const rooms = await Promise.all(
+          (formData.secondStep.selectedRooms || []).map(async (r) => {
+            if (r.price) return r; // Already has price
+            const roomDoc = await getDoc(doc(db, "rooms", r.id));
+            if (roomDoc.exists()) {
+              return { id: r.id, ...roomDoc.data() };
+            }
+            return null;
+          })
+        );
+        setRoomsWithPrice(rooms.filter(Boolean));
+      } catch (err) {
+        console.error("Failed to fetch room details:", err);
+      }
+    };
+    fetchRooms();
+  }, [formData.secondStep.selectedRooms]);
+
   const handleUpload = (e) => setReceipt(e.target.files[0]);
 
   const { totalAmount, advance, stayDays } = useMemo(() => {
     const checkIn = formData?.firstStep?.checkInDate ? new Date(formData.firstStep.checkInDate) : null;
     const checkOut = formData?.firstStep?.checkOutDate ? new Date(formData.firstStep.checkOutDate) : null;
-    const selectedRooms = formData?.secondStep?.selectedRooms || [];
+    const selectedRooms = roomsWithPrice || [];
 
     if (!checkIn || !checkOut || selectedRooms.length === 0) return { totalAmount: 0, advance: 0, stayDays: 0 };
 
@@ -71,11 +95,11 @@ const ThirdStep = ({ formData, selectedPayment, setSelectedPayment }) => {
     let fullDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
     if (fullDays < 0) fullDays = 0;
 
-    const total = selectedRooms.reduce((sum, room) => sum + room.price * fullDays, 0);
+    const total = selectedRooms.reduce((sum, room) => sum + (room.price || 0) * fullDays, 0);
     const adv = Math.round(total * 0.4);
 
     return { totalAmount: total, advance: adv, stayDays: fullDays };
-  }, [formData]);
+  }, [formData, roomsWithPrice]);
 
   const previewData = useMemo(
     () => ({
@@ -128,41 +152,6 @@ const ThirdStep = ({ formData, selectedPayment, setSelectedPayment }) => {
               />
             ))
           )}
-
-          <Box sx={{ mt: 3, pt: 3, borderTop: "1px solid rgba(0,0,0,0.1)" }}>
-            <Typography variant="h6" sx={{ fontWeight: "bold", color: "black", mb: 2 }}>Upload Payment Receipt</Typography>
-            <Button
-              variant="contained"
-              component="label"
-              startIcon={<CloudUploadIcon sx={{ color: theme.palette.secondary.main }} />}
-              sx={{
-                borderRadius: 1,
-                fontWeight: "bold",
-                backgroundColor: "white",
-                color: theme.palette.secondary.main,
-                textTransform: "none",
-                padding: "8px 20px",
-                border: `1px solid ${theme.palette.secondary.main}`,
-                "&:hover": {
-                  backgroundColor: theme.palette.secondary.main,
-                  color: "white",
-                  "& .MuiSvgIcon-root": { color: "white" },
-                },
-              }}
-            >
-              Upload Receipt
-              <input type="file" hidden onChange={handleUpload} />
-            </Button>
-
-            <Typography variant="body2" sx={{ mt: 1, color: "text.secondary", fontSize: "0.8rem" }}>
-              PDF, JPG, PNG - Max 5Mb
-            </Typography>
-            {receipt ? (
-              <Typography sx={{ mt: 1, color: theme.palette.success.main, fontStyle: "italic" }}>Uploaded: {receipt.name}</Typography>
-            ) : (
-              <Typography sx={{ mt: 1, color: "text.secondary" }}>Please upload the receipt after making the advance payment.</Typography>
-            )}
-          </Box>
         </Box>
       </Grid>
 
@@ -178,18 +167,14 @@ const ThirdStep = ({ formData, selectedPayment, setSelectedPayment }) => {
               onClick={() => setSelectedPayment(method.id)}
               sx={{
                 borderRadius: 2,
-                border: selectedPayment === method.id 
-                        ? `2px solid ${theme.palette.secondary.main}` 
-                        : "1px solid rgba(0,0,0,0.1)",
+                border: selectedPayment === method.id ? `2px solid ${theme.palette.secondary.main}` : "1px solid rgba(0,0,0,0.1)",
                 display: "flex",
                 alignItems: "center",
                 gap: 2,
                 p: 2,
                 cursor: "pointer",
                 bgcolor: "white",
-                boxShadow: selectedPayment === method.id 
-                            ? "0px 4px 10px rgba(0,0,0,0.15)"
-                            : "0px 2px 5px rgba(0,0,0,0.05)",
+                boxShadow: selectedPayment === method.id ? "0px 4px 10px rgba(0,0,0,0.15)" : "0px 2px 5px rgba(0,0,0,0.05)",
                 transition: "all 0.2s ease",
               }}
             >

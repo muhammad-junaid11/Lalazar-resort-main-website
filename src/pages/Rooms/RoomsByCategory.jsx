@@ -1,22 +1,34 @@
 import React, { useEffect, useState } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { 
-  Box, Grid, Card, CardMedia, Typography, Button, 
-  CircularProgress, useTheme, Pagination, Divider 
+  Box, Grid, Card, CardMedia, CardContent, Typography, Button, 
+  CircularProgress, useTheme, Pagination, Divider, Chip 
 } from "@mui/material";
 import { collection, getDocs, doc, getDoc } from "firebase/firestore";
 import { db } from "../../services/Firebase/Firebase";
 import HeroSection from "../../components/HeroSection";
 
-const toSlug = (text) =>
-  text.toLowerCase().replace(/\s+/g, "-").replace(/[^\w-]+/g, "");
+import LocationOnIcon from "@mui/icons-material/LocationOn";
+import HotelIcon from "@mui/icons-material/Hotel";
+import WifiIcon from "@mui/icons-material/Wifi";
+import PoolIcon from "@mui/icons-material/Pool";
+import LocalParkingIcon from "@mui/icons-material/LocalParking";
+import RestaurantIcon from "@mui/icons-material/Restaurant";
+import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
 
 import familyImg from "../../assets/Familyr.webp";
 import luxuryImg from "../../assets/Luxuryr.webp";
 import deluxeImg from "../../assets/Deluxer.webp";
 import executiveImg from "../../assets/Executiver.webp";
 
-// Mapping category slugs to local assets
+const amenityIcons = {
+  wifi: { icon: WifiIcon, label: "WiFi" },
+  pool: { icon: PoolIcon, label: "Pool" },
+  parking: { icon: LocalParkingIcon, label: "Parking" },
+  breakfast: { icon: RestaurantIcon, label: "Breakfast" },
+  gym: { icon: FitnessCenterIcon, label: "Gym" },
+};
+
 const categoryImages = {
   "family-room": familyImg,
   "luxury-room": luxuryImg,
@@ -24,45 +36,57 @@ const categoryImages = {
   "executive-room": executiveImg,
 };
 
-// Function to capitalize the first letter of each word (e.g., "luxury room" -> "Luxury Room")
 const capitalizeWords = (str) => {
-    if (!str) return "";
-    return str.toLowerCase().split(' ').map(word => 
-        word.charAt(0).toUpperCase() + word.slice(1)
-    ).join(' ');
+  if (!str) return "";
+  return str.toLowerCase().split(" ").map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
 };
 
-// Fetch rooms from Firestore
+const toSlug = (text) => text.toLowerCase().replace(/\s+/g, "-").replace(/[^\w-]+/g, "");
+
 const fetchRoomsByCategory = async (categorySlug) => {
   const roomsSnapshot = await getDocs(collection(db, "rooms"));
+  const hotelsSnapshot = await getDocs(collection(db, "hotel"));
+  const citiesSnapshot = await getDocs(collection(db, "city"));
+  const categoriesSnapshot = await getDocs(collection(db, "roomCategory"));
+
+  const hotelMap = {};
+  hotelsSnapshot.docs.forEach(doc => {
+    hotelMap[doc.id] = { name: doc.data().hotelName, cityId: doc.data().cityId };
+  });
+
+  const cityMap = {};
+  citiesSnapshot.docs.forEach(doc => {
+    cityMap[doc.id] = doc.data().cityName;
+  });
+
   const categoryMap = {};
+  categoriesSnapshot.docs.forEach(doc => {
+    categoryMap[doc.id] = doc.data().categoryName;
+  });
 
   const roomsPromises = roomsSnapshot.docs.map(async (roomDoc) => {
     const data = roomDoc.data();
     const roomId = roomDoc.id;
-    let categoryName = "N/A";
 
-    if (categoryMap[data.categoryId]) {
-      categoryName = categoryMap[data.categoryId];
-    } else {
-      const catRef = doc(db, "roomCategory", data.categoryId);
-      const catSnap = await getDoc(catRef);
-      if (catSnap.exists()) {
-        categoryName = catSnap.data().categoryName;
-        categoryMap[data.categoryId] = categoryName;
-      }
-    }
+    const hotelInfo = hotelMap[data.hotelId] || { name: "Unknown Hotel", cityId: null };
+    const cityName = cityMap[hotelInfo.cityId] || "Unknown City";
+    const categoryName = categoryMap[data.categoryId] || "Category";
 
-    // Only include rooms matching the current category slug
     if (toSlug(categoryName) === categorySlug.toLowerCase()) {
       return {
         id: roomId,
-        categoryName, // The original database name (e.g., "Luxury Room")
-        price: data.price,
-        image: data.image || "https://via.placeholder.com/300x220",
+        name: data.roomName || categoryName,
+        categoryId: data.categoryId,
+        hotelId: data.hotelId,
+        categoryName,
+        hotelName: hotelInfo.name,
+        cityName,
+        cityId: hotelInfo.cityId,
+        price: data.price || 0,
+        image: data.image || "https://via.placeholder.com/400x300",
+        amenities: data.amenities || [],
       };
     }
-
     return null;
   });
 
@@ -70,39 +94,31 @@ const fetchRoomsByCategory = async (categorySlug) => {
 };
 
 const RoomsByCategory = () => {
-  const { categoryName } = useParams(); // slug from URL (e.g., "luxury-room")
+  const { categoryName } = useParams();
   const theme = useTheme();
+  const navigate = useNavigate();
 
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  // State to hold the original, correctly capitalized category name from the database
-  // Initialize with fallback from slug
-  const [displayCategoryName, setDisplayCategoryName] = useState(capitalizeWords(categoryName.replace(/-/g, " "))); 
+  const [displayCategoryName, setDisplayCategoryName] = useState(capitalizeWords(categoryName.replace(/-/g, " ")));
 
-  // Pagination
   const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 8;
+  const itemsPerPage = 12;
 
-  // Set hero image based on category slug (local asset used) - this is immediate
   const heroImage = categoryImages[categoryName.toLowerCase()] || "https://via.placeholder.com/1400x400";
 
   useEffect(() => {
     const fetchRooms = async () => {
       try {
         setLoading(true);
-        setCurrentPage(1); // reset page when category changes
+        setCurrentPage(1);
         const fetchedRooms = await fetchRoomsByCategory(categoryName);
         setRooms(fetchedRooms);
 
         if (fetchedRooms.length > 0) {
-            // Get the original category name from the first room and format it
-            const rawCategoryName = fetchedRooms[0].categoryName;
-            setDisplayCategoryName(capitalizeWords(rawCategoryName));
-        } else {
-            // If no rooms, keep the fallback (already set)
+          setDisplayCategoryName(capitalizeWords(fetchedRooms[0].categoryName));
         }
-        
         setLoading(false);
       } catch (err) {
         console.error(err);
@@ -110,107 +126,105 @@ const RoomsByCategory = () => {
         setLoading(false);
       }
     };
-
     fetchRooms();
   }, [categoryName]);
 
   const handlePageChange = (event, value) => setCurrentPage(value);
 
+  // **Updated Book Now handler like AllRooms**
+  const handleBookNow = (room) => {
+    navigate(`/book?roomId=${room.id}&categoryId=${room.categoryId}&cityId=${room.cityId}`);
+  };
+
   const indexOfLastItem = currentPage * itemsPerPage;
-  const indexOfFirstItem = indexOfLastItem - itemsPerPage;
-  const currentRooms = rooms.slice(indexOfFirstItem, indexOfLastItem);
+  const currentRooms = rooms.slice(indexOfLastItem - itemsPerPage, indexOfLastItem);
   const totalPages = Math.ceil(rooms.length / itemsPerPage);
-  
-  // Breadcrumb text (Home | Gallery)
-  const breadcrumbText = `Gallery`;
-  // Main title text (e.g., "Luxury Room") - now initialized immediately
-  const mainTitle = displayCategoryName; 
-  
 
   return (
     <Box>
-      {/* Render HeroSection immediately, regardless of loading state */}
-      <HeroSection
-        subtitle={breadcrumbText} 
-        title={mainTitle} 
-        bgImage={heroImage} 
-        appBarColor="transparent" 
-      />
+      <HeroSection subtitle="Gallery" title={displayCategoryName} bgImage={heroImage} appBarColor="transparent" />
 
       <Box sx={{ p: 4, maxWidth: 1300, mx: "auto" }}>
         {loading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", p: 5 }}>
+          <Box sx={{ display: "flex", justifyContent: "center", p: 5, minHeight: "60vh" }}>
             <CircularProgress color="secondary" />
-            <Typography sx={{ ml: 2, color: "text.secondary" }}>
-              Loading {categoryName.replace("-", " ")} rooms...
-            </Typography>
+            <Typography sx={{ ml: 2, color: "text.secondary" }}>Loading {displayCategoryName} rooms...</Typography>
           </Box>
         ) : error ? (
-          <Typography color="error" align="center" sx={{ p: 5 }}>
-            {error}
-          </Typography>
+          <Typography color="error" align="center" sx={{ p: 5 }}>{error}</Typography>
         ) : rooms.length === 0 ? (
-          <Typography align="center" sx={{ p: 5 }}>
-            No rooms found for "{displayCategoryName}"
-          </Typography>
+          <Typography align="center" sx={{ p: 5 }}>No rooms found for "{displayCategoryName}"</Typography>
         ) : (
           <>
-            <Grid container spacing={3} justifyContent="flex-start">
+            <Grid container spacing={3} justifyContent="center">
               {currentRooms.map((room) => (
-                <Grid key={room.id} size={{xs:12,sm:6,md:3}}>
+                <Grid key={room.id} item xs={12} md={6} lg={3}>
                   <Card
                     sx={{
-                      width: "100%",
-                      height: 350,
-                      borderRadius: 0,
-                      overflow: "hidden",
-                      transition: "transform 0.2s, box-shadow 0.2s",
-                      "&:hover": {
-                        transform: "scale(1.03)",
-                        boxShadow: "0 4px 15px rgba(0,0,0,0.1)",
-                      },
+                      height: "100%",
                       display: "flex",
                       flexDirection: "column",
+                      borderRadius: 2,
+                      overflow: "hidden",
+                      transition: "transform 0.3s, box-shadow 0.3s",
+                      "&:hover": {
+                        transform: "translateY(-8px)",
+                        boxShadow: "0px 8px 24px rgba(0,0,0,0.15)",
+                      },
                     }}
                   >
-                    <CardMedia
-                      component="img"
-                      height="180"
-                      image={room.image} 
-                      alt={room.categoryName}
-                      sx={{ objectFit: "cover" }}
-                    />
-                    <Box sx={{ p: 2, flexGrow: 1, textAlign: "center" }}>
+                    <CardMedia component="img" height="180" image={room.image} alt={room.name} sx={{ objectFit: "cover" }} />
 
-
-                      <Typography variant="h5" sx={{ fontWeight: 700, mb: 2, color: theme.palette.secondary.main }}>
-                        PKR {room.price.toLocaleString()} /-
+                    <CardContent sx={{ flexGrow: 1, p: 2.2 }}>
+                      <Chip label={room.categoryName} size="small" sx={{ mb: 1, bgcolor: theme.palette.secondary.main, color: "white", fontWeight: "bold" }} />
+                      <Typography variant="h6" sx={{ fontWeight: "bold", mb: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                        {room.name}
                       </Typography>
 
-                      <Button
-                        variant="outlined"
-                        fullWidth
-                        sx={{
-                          fontWeight: "bold",
-                          borderColor: theme.palette.secondary.main,
-                          color: theme.palette.secondary.main,
-                          "&:hover": {
-                            backgroundColor: theme.palette.secondary.main,
-                            color: "#fff",
-                            borderColor: theme.palette.secondary.main,
-                          },
-                        }}
-                        onClick={() => console.log(`Book Room ID: ${room.id}`)}
-                      >
-                        Book Now
-                      </Button>
-                    </Box>
+                      <Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }}>
+                        <HotelIcon sx={{ fontSize: 18, mr: 0.5, color: "text.secondary" }} />
+                        <Typography variant="body2" color="text.secondary">{room.hotelName}</Typography>
+                      </Box>
+
+                      <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                        <LocationOnIcon sx={{ fontSize: 18, mr: 0.5, color: "text.secondary" }} />
+                        <Typography variant="body2" color="text.secondary">{room.cityName}</Typography>
+                      </Box>
+
+                      {room.amenities.length > 0 && (
+                        <Box sx={{ display: "flex", gap: 1, mb: 2, flexWrap: "wrap" }}>
+                          {room.amenities.slice(0, 4).map((amenity, index) => {
+                            const key = amenity.toLowerCase();
+                            const data = amenityIcons[key];
+                            const Icon = data?.icon;
+                            return Icon ? (
+                              <Box key={index} sx={{ display: "flex", alignItems: "center", gap: 0.5, px: 1, py: 0.5, bgcolor: "rgba(0,0,0,0.05)", borderRadius: 1 }}>
+                                <Icon sx={{ fontSize: 16, color: theme.palette.secondary.main }} />
+                                <Typography variant="caption">{data.label}</Typography>
+                              </Box>
+                            ) : null;
+                          })}
+                        </Box>
+                      )}
+
+                      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: "auto" }}>
+                        <Box>
+                          <Typography variant="h6" sx={{ fontWeight: "bold", color: theme.palette.secondary.main }}>
+                            PKR {room.price.toLocaleString()}
+                          </Typography>
+                          <Typography variant="caption" color="text.secondary">per night</Typography>
+                        </Box>
+
+                        <Button variant="contained" color="secondary" onClick={() => handleBookNow(room)} sx={{ fontWeight: "bold", px: 2, py: 1, borderRadius: 2, textTransform: "none" }}>
+                          Book Now
+                        </Button>
+                      </Box>
+                    </CardContent>
                   </Card>
                 </Grid>
               ))}
             </Grid>
 
-            {/* Pagination */}
             {totalPages > 1 && (
               <Box sx={{ display: "flex", justifyContent: "center", mt: 5 }}>
                 <Pagination count={totalPages} page={currentPage} onChange={handlePageChange} color="secondary" />
@@ -218,7 +232,7 @@ const RoomsByCategory = () => {
             )}
           </>
         )}
-        <Divider sx={{ mt: 5, borderColor: "grey.300" }} />
+        <Divider sx={{ mt: 5 }} />
       </Box>
     </Box>
   );
