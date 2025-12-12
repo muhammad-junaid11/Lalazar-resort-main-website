@@ -83,30 +83,33 @@ const FirstStep = ({ onChange, defaultValues = {} }) => {
   );
 
   const inputSx = {
-    mt: 2,
-    "& .MuiOutlinedInput-root": {
-      borderRadius: "10px",
-      "& .MuiInputBase-input": {
-        backgroundColor: "rgba(255,255,255,0.08)",
-        padding: "10px 10px",
-        color: "#000",
-      },
-      "& fieldset": { borderColor: "rgba(0,0,0,0.2)" },
-      "&:hover fieldset": { borderColor: "rgba(0,0,0,0.4)" },
-      "&.Mui-focused fieldset": {
-        borderColor: theme.palette.secondary.main,
-        boxShadow: `0 0 0 1px ${theme.palette.secondary.main}`,
-      },
-      "& .MuiSvgIcon-root": { color: theme.palette.secondary.main },
+  mt: 2,
+  "& .MuiOutlinedInput-root": {
+    borderRadius: "10px",
+    backgroundColor: "rgba(255,255,255,0.08)", // background for whole input
+    "& fieldset": {
+      borderColor: "rgba(0,0,0,0.2)",
     },
-    "& .MuiSelect-select": { color: "#000", padding: "16.5px 14px" },
-    "& .MuiInputLabel-root": {
-      color: "rgba(0,0,0,0.7)",
-      "&.Mui-focused": { color: theme.palette.secondary.main },
-      "&:not(.MuiInputLabel-shrink)": { transform: "translate(14px, 10px) scale(1)" },
-      "&.MuiInputLabel-shrink": { transform: "translate(14px, -9px) scale(0.75)" },
+    "&:hover fieldset": {
+      borderColor: "rgba(0,0,0,0.4)",
     },
-  };
+    "&.Mui-focused fieldset": {
+      borderColor: theme.palette.secondary.main,
+      // remove boxShadow or add inset if needed
+    },
+    "& .MuiInputBase-input": {
+      color: "#000",
+      padding: "9px", // adjust to prevent overlap with label notch
+    },
+    "& .MuiSelect-select": { color: "#000" },
+  },
+  "& .MuiInputLabel-root": {
+    color: "rgba(0,0,0,0.7)",
+    "&.Mui-focused": { color: theme.palette.secondary.main },
+    "&.MuiInputLabel-shrink": { transform: "translate(14px, -6px) scale(0.75)" }, // adjust so text not overlapped
+  },
+};
+
 
   return (
     <RHFformProvider methods={methods}>

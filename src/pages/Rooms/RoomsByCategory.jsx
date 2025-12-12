@@ -1,12 +1,23 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
-import { 
-  Box, Grid, Card, CardMedia, CardContent, Typography, Button, 
-  CircularProgress, useTheme, Pagination, Divider, Chip 
+import {
+  Box,
+  Grid,
+  Card,
+  CardMedia,
+  CardContent,
+  Typography,
+  Button,
+  CircularProgress,
+  useTheme,
+  Pagination,
+  Divider,
+  Chip,
 } from "@mui/material";
-import { collection, getDocs, doc, getDoc } from "firebase/firestore";
+import { collection, getDocs } from "firebase/firestore";
 import { db } from "../../services/Firebase/Firebase";
 import HeroSection from "../../components/HeroSection";
+import { auth } from "../../services/Firebase/Firebase";
 
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import HotelIcon from "@mui/icons-material/Hotel";
@@ -38,10 +49,18 @@ const categoryImages = {
 
 const capitalizeWords = (str) => {
   if (!str) return "";
-  return str.toLowerCase().split(" ").map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(" ");
+  return str
+    .toLowerCase()
+    .split(" ")
+    .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+    .join(" ");
 };
 
-const toSlug = (text) => text.toLowerCase().replace(/\s+/g, "-").replace(/[^\w-]+/g, "");
+const toSlug = (text) =>
+  text
+    .toLowerCase()
+    .replace(/\s+/g, "-")
+    .replace(/[^\w-]+/g, "");
 
 const fetchRoomsByCategory = async (categorySlug) => {
   const roomsSnapshot = await getDocs(collection(db, "rooms"));
@@ -50,17 +69,20 @@ const fetchRoomsByCategory = async (categorySlug) => {
   const categoriesSnapshot = await getDocs(collection(db, "roomCategory"));
 
   const hotelMap = {};
-  hotelsSnapshot.docs.forEach(doc => {
-    hotelMap[doc.id] = { name: doc.data().hotelName, cityId: doc.data().cityId };
+  hotelsSnapshot.docs.forEach((doc) => {
+    hotelMap[doc.id] = {
+      name: doc.data().hotelName,
+      cityId: doc.data().cityId,
+    };
   });
 
   const cityMap = {};
-  citiesSnapshot.docs.forEach(doc => {
+  citiesSnapshot.docs.forEach((doc) => {
     cityMap[doc.id] = doc.data().cityName;
   });
 
   const categoryMap = {};
-  categoriesSnapshot.docs.forEach(doc => {
+  categoriesSnapshot.docs.forEach((doc) => {
     categoryMap[doc.id] = doc.data().categoryName;
   });
 
@@ -68,7 +90,10 @@ const fetchRoomsByCategory = async (categorySlug) => {
     const data = roomDoc.data();
     const roomId = roomDoc.id;
 
-    const hotelInfo = hotelMap[data.hotelId] || { name: "Unknown Hotel", cityId: null };
+    const hotelInfo = hotelMap[data.hotelId] || {
+      name: "Unknown Hotel",
+      cityId: null,
+    };
     const cityName = cityMap[hotelInfo.cityId] || "Unknown City";
     const categoryName = categoryMap[data.categoryId] || "Category";
 
@@ -101,12 +126,16 @@ const RoomsByCategory = () => {
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
-  const [displayCategoryName, setDisplayCategoryName] = useState(capitalizeWords(categoryName.replace(/-/g, " ")));
+  const [displayCategoryName, setDisplayCategoryName] = useState(
+    capitalizeWords(categoryName.replace(/-/g, " "))
+  );
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 12;
 
-  const heroImage = categoryImages[categoryName.toLowerCase()] || "https://via.placeholder.com/1400x400";
+  const heroImage =
+    categoryImages[categoryName.toLowerCase()] ||
+    "https://via.placeholder.com/1400x400";
 
   useEffect(() => {
     const fetchRooms = async () => {
@@ -131,29 +160,60 @@ const RoomsByCategory = () => {
 
   const handlePageChange = (event, value) => setCurrentPage(value);
 
-  // **Updated Book Now handler like AllRooms**
   const handleBookNow = (room) => {
-    navigate(`/book?roomId=${room.id}&categoryId=${room.categoryId}&cityId=${room.cityId}`);
+    if (!auth.currentUser) {
+      // Save redirect in localStorage
+      localStorage.setItem(
+        "redirectAfterLogin",
+        `/book?roomId=${room.id}&categoryId=${room.categoryId}&cityId=${room.cityId}`
+      );
+      navigate("/signin");
+    } else {
+      navigate(
+        `/book?roomId=${room.id}&categoryId=${room.categoryId}&cityId=${room.cityId}`
+      );
+    }
   };
 
   const indexOfLastItem = currentPage * itemsPerPage;
-  const currentRooms = rooms.slice(indexOfLastItem - itemsPerPage, indexOfLastItem);
+  const currentRooms = rooms.slice(
+    indexOfLastItem - itemsPerPage,
+    indexOfLastItem
+  );
   const totalPages = Math.ceil(rooms.length / itemsPerPage);
 
   return (
     <Box>
-      <HeroSection subtitle="Gallery" title={displayCategoryName} bgImage={heroImage} appBarColor="transparent" />
+      <HeroSection
+        subtitle="Gallery"
+        title={displayCategoryName}
+        bgImage={heroImage}
+        appBarColor="transparent"
+      />
 
       <Box sx={{ p: 4, maxWidth: 1300, mx: "auto" }}>
         {loading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", p: 5, minHeight: "60vh" }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "center",
+              p: 5,
+              minHeight: "60vh",
+            }}
+          >
             <CircularProgress color="secondary" />
-            <Typography sx={{ ml: 2, color: "text.secondary" }}>Loading {displayCategoryName} rooms...</Typography>
+            <Typography sx={{ ml: 2, color: "text.secondary" }}>
+              Loading {displayCategoryName} rooms...
+            </Typography>
           </Box>
         ) : error ? (
-          <Typography color="error" align="center" sx={{ p: 5 }}>{error}</Typography>
+          <Typography color="error" align="center" sx={{ p: 5 }}>
+            {error}
+          </Typography>
         ) : rooms.length === 0 ? (
-          <Typography align="center" sx={{ p: 5 }}>No rooms found for "{displayCategoryName}"</Typography>
+          <Typography align="center" sx={{ p: 5 }}>
+            No rooms found for "{displayCategoryName}"
+          </Typography>
         ) : (
           <>
             <Grid container spacing={3} justifyContent="center">
@@ -173,49 +233,133 @@ const RoomsByCategory = () => {
                       },
                     }}
                   >
-                    <CardMedia component="img" height="180" image={room.image} alt={room.name} sx={{ objectFit: "cover" }} />
+                    <CardMedia
+                      component="img"
+                      height="180"
+                      image={room.image}
+                      alt={room.name}
+                      sx={{ objectFit: "cover" }}
+                    />
 
                     <CardContent sx={{ flexGrow: 1, p: 2.2 }}>
-                      <Chip label={room.categoryName} size="small" sx={{ mb: 1, bgcolor: theme.palette.secondary.main, color: "white", fontWeight: "bold" }} />
-                      <Typography variant="h6" sx={{ fontWeight: "bold", mb: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                        {room.name}
-                      </Typography>
+                      <Chip
+                        label={room.categoryName}
+                        size="small"
+                        variant="outlined"
+                        sx={{
+                          mb: 1,
+                          color: theme.palette.secondary.main, // text color
+                          borderColor: theme.palette.secondary.main, // border color
+                          fontWeight: "bold",
+                        }}
+                      />
 
-                      <Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }}>
-                        <HotelIcon sx={{ fontSize: 18, mr: 0.5, color: "text.secondary" }} />
-                        <Typography variant="body2" color="text.secondary">{room.hotelName}</Typography>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", mb: 0.5 }}
+                      >
+                        <HotelIcon
+                          sx={{
+                            fontSize: 18,
+                            mr: 0.5,
+                            color: "text.secondary",
+                          }}
+                        />
+                        <Typography variant="body2" color="text.secondary">
+                          {room.hotelName}
+                        </Typography>
                       </Box>
 
-                      <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-                        <LocationOnIcon sx={{ fontSize: 18, mr: 0.5, color: "text.secondary" }} />
-                        <Typography variant="body2" color="text.secondary">{room.cityName}</Typography>
+                      <Box
+                        sx={{ display: "flex", alignItems: "center", mb: 1 }}
+                      >
+                        <LocationOnIcon
+                          sx={{
+                            fontSize: 18,
+                            mr: 0.5,
+                            color: "text.secondary",
+                          }}
+                        />
+                        <Typography variant="body2" color="text.secondary">
+                          {room.cityName}
+                        </Typography>
                       </Box>
 
                       {room.amenities.length > 0 && (
-                        <Box sx={{ display: "flex", gap: 1, mb: 2, flexWrap: "wrap" }}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            gap: 1,
+                            mb: 2,
+                            flexWrap: "wrap",
+                          }}
+                        >
                           {room.amenities.slice(0, 4).map((amenity, index) => {
                             const key = amenity.toLowerCase();
                             const data = amenityIcons[key];
                             const Icon = data?.icon;
                             return Icon ? (
-                              <Box key={index} sx={{ display: "flex", alignItems: "center", gap: 0.5, px: 1, py: 0.5, bgcolor: "rgba(0,0,0,0.05)", borderRadius: 1 }}>
-                                <Icon sx={{ fontSize: 16, color: theme.palette.secondary.main }} />
-                                <Typography variant="caption">{data.label}</Typography>
+                              <Box
+                                key={index}
+                                sx={{
+                                  display: "flex",
+                                  alignItems: "center",
+                                  gap: 0.5,
+                                  px: 1,
+                                  py: 0.5,
+                                  bgcolor: "rgba(0,0,0,0.05)",
+                                  borderRadius: 1,
+                                }}
+                              >
+                                <Icon
+                                  sx={{
+                                    fontSize: 16,
+                                    color: theme.palette.secondary.main,
+                                  }}
+                                />
+                                <Typography variant="caption">
+                                  {data.label}
+                                </Typography>
                               </Box>
                             ) : null;
                           })}
                         </Box>
                       )}
 
-                      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: "auto" }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          justifyContent: "space-between",
+                          alignItems: "center",
+                          mt: "auto",
+                        }}
+                      >
                         <Box>
-                          <Typography variant="h6" sx={{ fontWeight: "bold", color: theme.palette.secondary.main }}>
+                          <Typography
+                            variant="h6"
+                            sx={{
+                              fontWeight: "bold",
+                              color: theme.palette.secondary.main,
+                            }}
+                          >
                             PKR {room.price.toLocaleString()}
                           </Typography>
-                          <Typography variant="caption" color="text.secondary">per night</Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            per night
+                          </Typography>
                         </Box>
 
-                        <Button variant="contained" color="secondary" onClick={() => handleBookNow(room)} sx={{ fontWeight: "bold", px: 2, py: 1, borderRadius: 2, textTransform: "none" }}>
+                        <Button
+                          variant="contained"
+                          color="secondary"
+                          onClick={() => handleBookNow(room)}
+                          sx={{
+                            fontWeight: "bold",
+                            px: 2,
+                            py: 1,
+                            borderRadius: 2,
+                            textTransform: "none",
+                          }}
+                        >
                           Book Now
                         </Button>
                       </Box>
@@ -227,7 +371,12 @@ const RoomsByCategory = () => {
 
             {totalPages > 1 && (
               <Box sx={{ display: "flex", justifyContent: "center", mt: 5 }}>
-                <Pagination count={totalPages} page={currentPage} onChange={handlePageChange} color="secondary" />
+                <Pagination
+                  count={totalPages}
+                  page={currentPage}
+                  onChange={handlePageChange}
+                  color="secondary"
+                />
               </Box>
             )}
           </>

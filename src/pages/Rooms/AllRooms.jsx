@@ -148,10 +148,19 @@ const AllRooms = () => {
               <CardMedia component="img" height="180" image={room.image} alt={room.name} sx={{ objectFit: "cover" }} />
 
               <CardContent sx={{ flexGrow: 1, p: 2.2 }}>
-                <Chip label={room.categoryName} size="small" sx={{ mb: 1, bgcolor: theme.palette.secondary.main, color: "white", fontWeight: "bold" }} />
-                <Typography variant="h6" sx={{ fontWeight: "bold", mb: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {room.name}
-                </Typography>
+                <Chip
+  label={room.categoryName}
+  size="small"
+  variant="outlined"
+  sx={{
+    mb: 1,
+    color: theme.palette.secondary.main,         // text color
+    borderColor: theme.palette.secondary.main,   // border color
+    fontWeight: "bold",
+  }}
+/>
+
+              
 
                 <Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }}>
                   <HotelIcon sx={{ fontSize: 18, mr: 0.5, color: "text.secondary" }} />
@@ -187,7 +196,7 @@ const AllRooms = () => {
                     <Typography variant="caption" color="text.secondary">per night</Typography>
                   </Box>
 
-                  <Button variant="contained" color="secondary" onClick={() => handleBookNow(room)} sx={{ fontWeight: "bold", px: 2, py: 1, borderRadius: 2, textTransform: "none" }}>
+                  <Button variant="contained" color="secondary" onClick={() => handleBookNow(room)} sx={{ fontWeight: "bold", px: 1, py: 1, borderRadius: 2, textTransform: "none" }}>
                     Book Now
                   </Button>
                 </Box>
