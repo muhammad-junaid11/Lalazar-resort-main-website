@@ -26,6 +26,7 @@ import PoolIcon from "@mui/icons-material/Pool";
 import LocalParkingIcon from "@mui/icons-material/LocalParking";
 import RestaurantIcon from "@mui/icons-material/Restaurant";
 import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
+import MonetizationOnIcon from "@mui/icons-material/MonetizationOn";
 
 import familyImg from "../../assets/Familyr.webp";
 import luxuryImg from "../../assets/Luxuryr.webp";
@@ -228,137 +229,70 @@ const RoomsByCategory = () => {
                       overflow: "hidden",
                       transition: "transform 0.3s, box-shadow 0.3s",
                       "&:hover": {
-                        transform: "translateY(-8px)",
-                        boxShadow: "0px 8px 24px rgba(0,0,0,0.15)",
+                        transform: "translateY(-5px)",
+                        boxShadow: "0px 6px 20px rgba(0,0,0,0.1)",
                       },
                     }}
                   >
                     <CardMedia
                       component="img"
-                      height="180"
+                      height="160"
                       image={room.image}
                       alt={room.name}
                       sx={{ objectFit: "cover" }}
                     />
 
-                    <CardContent sx={{ flexGrow: 1, p: 2.2 }}>
+                    <CardContent sx={{ flexGrow: 1, p: { xs: 1.5, sm: 2, md: 2.2 } }}>
                       <Chip
                         label={room.categoryName}
                         size="small"
                         variant="outlined"
                         sx={{
                           mb: 1,
-                          color: theme.palette.secondary.main, // text color
-                          borderColor: theme.palette.secondary.main, // border color
+                          color: theme.palette.secondary.main,
+                          borderColor: theme.palette.secondary.main,
                           fontWeight: "bold",
+                          fontSize: { xs: 10, sm: 11, md: 12 }
                         }}
                       />
 
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", mb: 0.5 }}
-                      >
-                        <HotelIcon
-                          sx={{
-                            fontSize: 18,
-                            mr: 0.5,
-                            color: "text.secondary",
-                          }}
-                        />
-                        <Typography variant="body2" color="text.secondary">
-                          {room.hotelName}
-                        </Typography>
+                      <Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }}>
+                        <HotelIcon sx={{ fontSize: { xs: 14, sm: 16 }, mr: 0.5, color: "text.secondary" }} />
+                        <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: 12, sm: 13 } }}>{room.hotelName}</Typography>
                       </Box>
 
-                      <Box
-                        sx={{ display: "flex", alignItems: "center", mb: 1 }}
-                      >
-                        <LocationOnIcon
-                          sx={{
-                            fontSize: 18,
-                            mr: 0.5,
-                            color: "text.secondary",
-                          }}
-                        />
-                        <Typography variant="body2" color="text.secondary">
-                          {room.cityName}
-                        </Typography>
+                      <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                        <LocationOnIcon sx={{ fontSize: { xs: 14, sm: 16 }, mr: 0.5, color: "text.secondary" }} />
+                        <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: 12, sm: 13 } }}>{room.cityName}</Typography>
+                      </Box>
+
+                      <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                        <MonetizationOnIcon sx={{ fontSize: { xs: 14, sm: 16 }, mr: 0.5, color: "text.secondary" }} />
+                        <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: 12, sm: 13 } }}>PKR {room.price.toLocaleString()} per night</Typography>
                       </Box>
 
                       {room.amenities.length > 0 && (
-                        <Box
-                          sx={{
-                            display: "flex",
-                            gap: 1,
-                            mb: 2,
-                            flexWrap: "wrap",
-                          }}
-                        >
+                        <Box sx={{ display: "flex", gap: 1, mb: 2, flexWrap: "wrap" }}>
                           {room.amenities.slice(0, 4).map((amenity, index) => {
                             const key = amenity.toLowerCase();
                             const data = amenityIcons[key];
                             const Icon = data?.icon;
                             return Icon ? (
-                              <Box
-                                key={index}
-                                sx={{
-                                  display: "flex",
-                                  alignItems: "center",
-                                  gap: 0.5,
-                                  px: 1,
-                                  py: 0.5,
-                                  bgcolor: "rgba(0,0,0,0.05)",
-                                  borderRadius: 1,
-                                }}
-                              >
-                                <Icon
-                                  sx={{
-                                    fontSize: 16,
-                                    color: theme.palette.secondary.main,
-                                  }}
-                                />
-                                <Typography variant="caption">
-                                  {data.label}
-                                </Typography>
+                              <Box key={index} sx={{ display: "flex", alignItems: "center", gap: 0.5, px: 1, py: 0.5, bgcolor: "rgba(0,0,0,0.03)", borderRadius: 1 }}>
+                                <Icon sx={{ fontSize: { xs: 14, sm: 16 }, color: theme.palette.secondary.main }} />
+                                <Typography variant="caption" sx={{ fontSize: { xs: 9, sm: 10 } }}>{data.label}</Typography>
                               </Box>
                             ) : null;
                           })}
                         </Box>
                       )}
 
-                      <Box
-                        sx={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                          alignItems: "center",
-                          mt: "auto",
-                        }}
-                      >
-                        <Box>
-                          <Typography
-                            variant="h6"
-                            sx={{
-                              fontWeight: "bold",
-                              color: theme.palette.secondary.main,
-                            }}
-                          >
-                            PKR {room.price.toLocaleString()}
-                          </Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            per night
-                          </Typography>
-                        </Box>
-
-                        <Button
-                          variant="contained"
-                          color="secondary"
-                          onClick={() => handleBookNow(room)}
-                          sx={{
-                            fontWeight: "bold",
-                            px: 2,
-                            py: 1,
-                            borderRadius: 2,
-                            textTransform: "none",
-                          }}
+                      <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: "auto" }}>
+                        <Button 
+                          variant="outlined" 
+                          color="secondary" 
+                          onClick={() => handleBookNow(room)} 
+                          sx={{ fontWeight: "bold", px: { xs: 1, sm: 1.5 }, py: { xs: 0.8, sm: 1 }, borderRadius: 2, textTransform: "none", fontSize: { xs: 12, sm: 13 } }}
                         >
                           Book Now
                         </Button>

@@ -1,19 +1,15 @@
 import React, { useState, useEffect } from "react";
 import { Box, Typography, Button } from "@mui/material";
-import DatePickerInput from "../../components/Form/DatePickerInput";
-import GuestsInput from "./GuestsInput";
-import { useFormContext } from "react-hook-form";
 import { useTheme } from "@mui/material/styles";
 import { useNavigate } from "react-router-dom";
-import { auth } from "../../services/Firebase/Firebase";   // ✅ ADDED
+import { auth } from "../../services/Firebase/Firebase";
 
 const BookingSection = ({ images }) => {
   const [index, setIndex] = useState(0);
   const theme = useTheme();
-  const { control, handleSubmit } = useFormContext();
   const navigate = useNavigate();
 
-  // ✅ LOGIN STATE
+  // LOGIN STATE
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
@@ -23,7 +19,7 @@ const BookingSection = ({ images }) => {
     return () => unsubscribe();
   }, []);
 
-  // Existing slider effect (unchanged)
+  // Image slider effect
   useEffect(() => {
     const interval = setInterval(
       () => setIndex((prev) => (prev + 1) % images.length),
@@ -31,8 +27,6 @@ const BookingSection = ({ images }) => {
     );
     return () => clearInterval(interval);
   }, [images.length]);
-
-  const onSubmit = (data) => console.log("Search Data:", data);
 
   return (
     <Box
@@ -43,6 +37,7 @@ const BookingSection = ({ images }) => {
         overflow: "hidden",
       }}
     >
+      {/* Background images */}
       {images.map((img, i) => (
         <Box
           key={i}
@@ -58,14 +53,16 @@ const BookingSection = ({ images }) => {
         />
       ))}
 
+      {/* Overlay */}
       <Box
         sx={{
           position: "absolute",
           inset: 0,
-          backgroundColor: "rgba(0,0,0,0.5)",
+          backgroundColor: "rgba(0,0,0,0.3)",
         }}
       />
 
+      {/* Content */}
       <Box
         sx={{
           position: "relative",
@@ -79,9 +76,11 @@ const BookingSection = ({ images }) => {
           zIndex: 2,
         }}
       >
+
         <Box
           sx={{
-            maxWidth: { xs: "90%", md: "550px" },
+            width: "100%", 
+            maxWidth: { xs: "90%", sm: "70%", md: "600px" },
             textAlign: "center",
           }}
         >
@@ -92,59 +91,14 @@ const BookingSection = ({ images }) => {
               fontFamily: "serif",
               color: theme.palette.common.white,
               textShadow: "2px 2px 8px rgba(0,0,0,0.7)",
-              fontSize: { xs: "2rem", md: "3.5rem" },
+              fontSize: { xs: "3rem", md: "3.8rem" },
             }}
           >
             Luxury Living In The Heart Of Shogran
           </Typography>
         </Box>
 
-        {/* FORM */}
-        <Box
-          component="form"
-          onSubmit={handleSubmit(onSubmit)}
-          sx={{
-            width: { xs: "95%", md: "80%", lg: "70%" },
-            display: "flex",
-            flexDirection: { xs: "column", md: "row" },
-            gap: 2,
-            backgroundColor: theme.palette.common.white,
-            p: 3,
-            borderRadius: 3,
-            boxShadow: 3,
-            alignItems: "center",
-          }}
-        >
-          <DatePickerInput
-            name="checkin"
-            control={control}
-            label="Check-in"
-            sx={{ flex: 1 }}
-          />
-
-          <DatePickerInput
-            name="checkout"
-            control={control}
-            label="Check-out"
-            sx={{ flex: 1 }}
-          />
-
-          <GuestsInput
-            name="guests"
-            control={control}
-            label="Guests"
-            sx={{ flex: 1 }}
-          />
-
-          <Button
-            type="submit"
-            variant="contained"
-            color="secondary"
-            sx={{ px: 5, py: 2 }}
-          >
-            Search
-          </Button>
-        </Box>
+        {/* Book Now Button */}
         <Button
           variant="contained"
           color="secondary"
@@ -152,7 +106,7 @@ const BookingSection = ({ images }) => {
             mt: 3,
             px: 4,
             py: 1.5,
-            color:"white",
+            color: "white",
             fontSize: "1.1rem",
             fontWeight: 600,
             borderRadius: 2,

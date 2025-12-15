@@ -14,6 +14,7 @@ import {
 } from "@mui/material";
 import MenuIcon from "@mui/icons-material/Menu";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import CloseIcon from "@mui/icons-material/Close";
 import PhoneIcon from "@mui/icons-material/Phone";
 import EmailIcon from "@mui/icons-material/Email";
 import RoomIcon from "@mui/icons-material/Room";
@@ -54,7 +55,17 @@ const Layout = ({ children, navColor = "transparent" }) => {
       }
     });
 
-    return () => unsubscribe();
+    // Close mobile drawer automatically on large screens
+    const handleResize = () => {
+      if (window.innerWidth >= theme.breakpoints.values.lg) {
+        setMobileOpen(false);
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    return () => {
+      unsubscribe();
+      window.removeEventListener("resize", handleResize);
+    };
   }, []);
 
   const handleLogout = () => {
@@ -95,91 +106,81 @@ const Layout = ({ children, navColor = "transparent" }) => {
         console.error("Failed to fetch room categories", err);
       }
     };
-
     fetchRoomCategories();
   }, []);
 
-  // Dropdown for desktop
   const Dropdown = ({ selected, theme }) => {
-  const [anchorEl, setAnchorEl] = useState(null);
-  const open = Boolean(anchorEl);
+    const [anchorEl, setAnchorEl] = useState(null);
+    const open = Boolean(anchorEl);
+    const handleClick = (event) => setAnchorEl(anchorEl ? null : event.currentTarget);
+    const handleClose = () => setAnchorEl(null);
 
-  const handleClick = (event) => {
-    setAnchorEl(anchorEl ? null : event.currentTarget);
-  };
-
-  const handleClose = () => {
-    setAnchorEl(null);
-  };
-
-  return (
-    <Box sx={{ display: "inline-block" }}>
-      <Button
-        id="rooms-button"
-        aria-controls={open ? "rooms-menu" : undefined}
-        aria-haspopup="true"
-        aria-expanded={open ? "true" : undefined}
-        onClick={handleClick}
-        endIcon={
-          <KeyboardArrowDownIcon
-            sx={{ color: theme.palette.primary.contrastText, fontSize: 20 }}
-          />
-        }
-        sx={{
-          color: theme.palette.primary.contrastText,
-          textTransform: "none",
-          fontSize: "16px",
-          padding: 0,
-          minWidth: "auto",
-          cursor: "pointer", // Added for pointer cursor
-          borderBottom: selected
-            ? `2px solid ${theme.palette.secondary.main}`
-            : "2px solid transparent",
-          ":hover": {
-            backgroundColor: "transparent",
-            borderBottom: `2px solid ${theme.palette.secondary.main}`,
+    return (
+      <Box sx={{ display: "inline-block" }}>
+        <Button
+          id="rooms-button"
+          aria-controls={open ? "rooms-menu" : undefined}
+          aria-haspopup="true"
+          aria-expanded={open ? "true" : undefined}
+          onClick={handleClick}
+          endIcon={
+            <KeyboardArrowDownIcon
+              sx={{ color: theme.palette.primary.contrastText, fontSize: 20 }}
+            />
+          }
+          sx={{
             color: theme.palette.primary.contrastText,
-          },
-          transition: "border-bottom 0.3s ease",
-        }}
-      >
-        Rooms
-      </Button>
-
-      <Menu
-        id="rooms-menu"
-        anchorEl={anchorEl}
-        open={open}
-        onClose={handleClose}
-        anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-        transformOrigin={{ vertical: "top", horizontal: "left" }}
-        MenuListProps={{
-          "aria-labelledby": "rooms-button",
-        }}
-      >
-        <MenuItem
-          onClick={() => {
-            handleClose();
-            navigate("/rooms");
+            textTransform: "none",
+            fontSize: "16px",
+            padding: 0,
+            minWidth: "auto",
+            cursor: "pointer",
+            borderBottom: selected
+              ? `2px solid ${theme.palette.secondary.main}`
+              : "2px solid transparent",
+            ":hover": {
+              backgroundColor: "transparent",
+              borderBottom: `2px solid ${theme.palette.secondary.main}`,
+              color: theme.palette.primary.contrastText,
+            },
+            transition: "border-bottom 0.3s ease",
           }}
         >
-          All Rooms
-        </MenuItem>
-        {roomCategories.map((item) => (
+          Rooms
+        </Button>
+
+        <Menu
+          id="rooms-menu"
+          anchorEl={anchorEl}
+          open={open}
+          onClose={handleClose}
+          anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+          transformOrigin={{ vertical: "top", horizontal: "left" }}
+          MenuListProps={{ "aria-labelledby": "rooms-button" }}
+        >
           <MenuItem
-            key={item.id}
             onClick={() => {
               handleClose();
-              navigate(`/rooms/${toSlug(item.categoryName)}`);
+              navigate("/rooms");
             }}
           >
-            {item.categoryName}
+            All Rooms
           </MenuItem>
-        ))}
-      </Menu>
-    </Box>
-  );
-};
+          {roomCategories.map((item) => (
+            <MenuItem
+              key={item.id}
+              onClick={() => {
+                handleClose();
+                navigate(`/rooms/${toSlug(item.categoryName)}`);
+              }}
+            >
+              {item.categoryName}
+            </MenuItem>
+          ))}
+        </Menu>
+      </Box>
+    );
+  };
 
   const NavItem = ({ to, children, selected, theme }) => (
     <Typography
@@ -204,16 +205,31 @@ const Layout = ({ children, navColor = "transparent" }) => {
     </Typography>
   );
 
-  const MobileNavItem = ({ to, children, onClick }) => (
-    <MenuItem
-      component={to ? Link : "div"}
-      to={to}
-      onClick={onClick}
-      sx={{ display: "flex", flexDirection: "column" }}
-    >
-      {children}
-    </MenuItem>
-  );
+ const MobileNavItem = ({ to, label, onClick }) => (
+  <MenuItem
+    component={to ? Link : "div"}
+    to={to}
+    onClick={onClick}
+    sx={{
+      display: "flex",
+      flexDirection: "column",
+      alignItems: "flex-start",
+      width: "100%",
+      paddingY: 1,
+      fontWeight: 500,
+      fontSize: 16,
+      color: "text.primary",
+      textDecoration: "none",
+      ":hover": {
+        color: "secondary.main",
+        backgroundColor: "transparent",
+      },
+    }}
+  >
+    {label}
+  </MenuItem>
+);
+
 
   const currentYear = new Date().getFullYear();
 
@@ -404,104 +420,98 @@ const Layout = ({ children, navColor = "transparent" }) => {
 
           {/* Mobile Drawer */}
           <Drawer
-            anchor="right"
-            open={mobileOpen}
-            onClose={() => setMobileOpen(false)}
-          >
-            <Box sx={{ width: 250, p: 2 }}>
-              <MobileNavItem to="/" onClick={() => setMobileOpen(false)}>
-                Home
-              </MobileNavItem>
-              <MobileNavItem to="/about" onClick={() => setMobileOpen(false)}>
-                About
-              </MobileNavItem>
-              <MobileNavItem to="/activities" onClick={() => setMobileOpen(false)}>
-                Activities
-              </MobileNavItem>
+  anchor="right"
+  open={mobileOpen}
+  onClose={() => setMobileOpen(false)}
+  PaperProps={{
+    sx: {
+      width: "70vw",        // 70% of viewport width
+      height: "100%",
+      bgcolor: theme.palette.background.paper,
+      // position: "relative",  <-- REMOVE THIS
+    },
+  }}
+  BackdropProps={{
+    sx: {
+      backgroundColor: "rgba(0,0,0,0.3)",
+    },
+  }}
+>
+ <Box sx={{ p: 2 }}>
+  {/* Logo + Close Button */}
+  <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
+    <Box component="img" src={logo} alt="logo" sx={{ height: 60, width: "auto" }} />
+    <IconButton onClick={() => setMobileOpen(false)}>
+      <CloseIcon />
+    </IconButton>
+  </Box>
 
-              <Box>
-                <Button
-                  onClick={() => setMobileRoomsOpen(!mobileRoomsOpen)}
-                  sx={{
-                    color: theme.palette.text.primary,
-                    textTransform: "none",
-                    fontWeight: "bold",
-                    justifyContent: "space-between",
-                    width: "100%",
-                  }}
-                  endIcon={<KeyboardArrowDownIcon />}
-                >
-                  Rooms
-                </Button>
-                {mobileRoomsOpen && (
-                  <Box sx={{ pl: 2 }}>
-                    {roomCategories.map((item) => (
-                      <MobileNavItem
-                        key={item.id}
-                        to={`/rooms/${toSlug(item.categoryName)}`}
-                        onClick={() => setMobileOpen(false)}
-                      >
-                        {item.categoryName}
-                      </MobileNavItem>
-                    ))}
-                  </Box>
-                )}
-                {!mobileRoomsOpen && (
-                  <Box sx={{ pl: 2, mt: 1 }}>
-                    <Button
-                      onClick={() => {
-                        setMobileOpen(false);
-                        navigate("/rooms");
-                      }}
-                      sx={{
-                        textTransform: "none",
-                        fontWeight: "bold",
-                        color: theme.palette.primary.main,
-                      }}
-                    >
-                      Go to Rooms Main Page
-                    </Button>
-                  </Box>
-                )}
-              </Box>
+  {/* Main Items */}
+  <MobileNavItem to="/" label="Home" onClick={() => setMobileOpen(false)} />
+  <MobileNavItem to="/about" label="About" onClick={() => setMobileOpen(false)} />
+  <MobileNavItem to="/activities" label="Activities" onClick={() => setMobileOpen(false)} />
 
-              <MobileNavItem to="/services" onClick={() => setMobileOpen(false)}>
-                Services
-              </MobileNavItem>
-              <MobileNavItem to="/contact" onClick={() => setMobileOpen(false)}>
-                Contact
-              </MobileNavItem>
-              <MobileNavItem
-                to="#"
-                onClick={() => {
-                  setMobileOpen(false);
-                  handleBookNow();
-                }}
-              >
-                Book Now
-              </MobileNavItem>
+  {/* Rooms Dropdown */}
+{/* Rooms Dropdown */}
+<Box sx={{ width: "100%" }}>
+  <MobileNavItem
+    label="Rooms"
+    onClick={() => setMobileRoomsOpen(!mobileRoomsOpen)}
+    sx={{
+      display: "flex",
+      justifyContent: "space-between",
+      width: "100%",
+    }}
+  >
+    <KeyboardArrowDownIcon sx={{ fontSize: 20 }} />
+  </MobileNavItem>
 
-              {userName ? (
-                <MobileNavItem
-                  to="/"
-                  onClick={() => {
-                    handleLogout();
-                    setMobileOpen(false);
-                  }}
-                >
-                  Logout
-                </MobileNavItem>
-              ) : (
-                <>
-                  <MobileNavItem to="/signin" onClick={() => setMobileOpen(false)}>
-                    Sign In
-                  </MobileNavItem>
-                  <MobileNavItem to="/signup" onClick={() => setMobileOpen(false)}>
-                    Sign Up
-                  </MobileNavItem>
-                </>
-              )}
-            </Box>
+  {mobileRoomsOpen && (
+    <Box sx={{ pl: 3, display: "flex", flexDirection: "column", gap: 0.5 }}>
+      <MobileNavItem
+        to="/rooms"
+        label="All Rooms"
+        onClick={() => setMobileOpen(false)}
+      />
+      {roomCategories.map((item) => (
+        <MobileNavItem
+          key={item.id}
+          to={`/rooms/${toSlug(item.categoryName)}`}
+          label={item.categoryName}
+          onClick={() => setMobileOpen(false)}
+        />
+      ))}
+    </Box>
+  )}
+</Box>
+
+
+  <MobileNavItem to="/services" label="Services" onClick={() => setMobileOpen(false)} />
+  <MobileNavItem to="/contact" label="Contact" onClick={() => setMobileOpen(false)} />
+  <MobileNavItem
+    label="Book Now"
+    onClick={() => {
+      setMobileOpen(false);
+      handleBookNow();
+    }}
+  />
+  
+  {userName ? (
+    <MobileNavItem
+      label="Logout"
+      onClick={() => {
+        handleLogout();
+        setMobileOpen(false);
+      }}
+    />
+  ) : (
+    <>
+      <MobileNavItem to="/signin" label="Sign In" onClick={() => setMobileOpen(false)} />
+      <MobileNavItem to="/signup" label="Sign Up" onClick={() => setMobileOpen(false)} />
+    </>
+  )}
+</Box>
+
           </Drawer>
         </Toolbar>
       </AppBar>
@@ -538,20 +548,52 @@ const Layout = ({ children, navColor = "transparent" }) => {
               >
                 Pages
               </Typography>
-              <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
-                {["Services", "Rooms", "Contacts"].map((item, i) => (
-                  <Typography
-                    key={i}
-                    sx={{
-                      cursor: "pointer",
-                      transition: "0.3s",
-                      "&:hover": { color: "secondary.main" },
-                    }}
-                  >
-                    {item}
-                  </Typography>
-                ))}
-              </Box>
+           <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+  <Typography
+    component={Link}
+    to="/services"
+    onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+    sx={{
+      cursor: "pointer",
+      
+      textDecoration: "none",
+      color: "text.primary",
+      transition: "0.3s",
+      "&:hover": { color: "secondary.main" },
+    }}
+  >
+    Services
+  </Typography>
+  <Typography
+    component={Link}
+    onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+    to="/rooms"
+    sx={{
+      cursor: "pointer",
+      textDecoration: "none",
+      color: "text.primary",
+      transition: "0.3s",
+      "&:hover": { color: "secondary.main" },
+    }}
+  >
+    Rooms
+  </Typography>
+  <Typography
+    component={Link}
+    onClick={() => window.scrollTo({ top: 0, behavior: "smooth" })}
+    to="/contact"
+    sx={{
+      cursor: "pointer",
+      textDecoration: "none",
+      color: "text.primary",
+      transition: "0.3s",
+      "&:hover": { color: "secondary.main" },
+    }}
+  >
+    Contact
+  </Typography>
+</Box>
+
             </Grid>
 
             <Grid size={{ xs: 12, md: 4 }} textAlign={{ xs: "center", md: "left" }}>

@@ -15,7 +15,7 @@ import {
 } from "@mui/material";
 
 import { collection, getDocs } from "firebase/firestore";
-import { db } from "../../services/Firebase/Firebase";
+import { db, auth } from "../../services/Firebase/Firebase"; // include auth
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import HotelIcon from "@mui/icons-material/Hotel";
 import WifiIcon from "@mui/icons-material/Wifi";
@@ -23,6 +23,7 @@ import PoolIcon from "@mui/icons-material/Pool";
 import LocalParkingIcon from "@mui/icons-material/LocalParking";
 import RestaurantIcon from "@mui/icons-material/Restaurant";
 import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
+import MonetizationOnIcon from "@mui/icons-material/MonetizationOn";
 import { useNavigate } from "react-router-dom";
 
 const amenityIcons = {
@@ -33,6 +34,7 @@ const amenityIcons = {
   gym: { icon: FitnessCenterIcon, label: "Gym" },
 };
 
+// Fetch room data from Firestore
 const getRoomData = async () => {
   const roomsSnapshot = await getDocs(collection(db, "rooms"));
   const hotelsSnapshot = await getDocs(collection(db, "hotel"));
@@ -108,7 +110,16 @@ const AllRooms = () => {
   }, []);
 
   const handleBookNow = (room) => {
-    navigate(`/book?roomId=${room.id}&categoryId=${room.categoryId}&cityId=${room.cityId}`);
+    if (!auth.currentUser) {
+      // Save redirect after login
+      localStorage.setItem(
+        "redirectAfterLogin",
+        `/book?roomId=${room.id}&categoryId=${room.categoryId}&cityId=${room.cityId}`
+      );
+      navigate("/signin");
+    } else {
+      navigate(`/book?roomId=${room.id}&categoryId=${room.categoryId}&cityId=${room.cityId}`);
+    }
   };
 
   const indexOfLastItem = currentPage * itemsPerPage;
@@ -127,10 +138,10 @@ const AllRooms = () => {
   );
 
   return (
-    <Box sx={{ p: 4, maxWidth: 1300, mx: "auto" }}>
-      <Grid container spacing={3} justifyContent="center">
+    <Box sx={{ p: { xs: 2, sm: 3, md: 4 }, maxWidth: 1300, mx: "auto" }}>
+      <Grid container spacing={{ xs: 2, sm: 3, md: 3 }} justifyContent="center">
         {currentRooms.map((room) => (
-          <Grid size={{xs:12,md:6,lg:3}} key={room.id}>
+          <Grid key={room.id} size={{ xs: 12, sm: 6, md: 6, lg: 3 }}>
             <Card
               sx={{
                 height: "100%",
@@ -140,36 +151,46 @@ const AllRooms = () => {
                 overflow: "hidden",
                 transition: "transform 0.3s, box-shadow 0.3s",
                 "&:hover": {
-                  transform: "translateY(-8px)",
-                  boxShadow: "0px 8px 24px rgba(0,0,0,0.15)",
+                  transform: "translateY(-5px)",
+                  boxShadow: "0px 6px 20px rgba(0,0,0,0.1)",
                 },
               }}
             >
-              <CardMedia component="img" height="180" image={room.image} alt={room.name} sx={{ objectFit: "cover" }} />
+              <CardMedia 
+                component="img" 
+                height="160" 
+                image={room.image} 
+                alt={room.name} 
+                sx={{ objectFit: "cover" }} 
+              />
 
-              <CardContent sx={{ flexGrow: 1, p: 2.2 }}>
+              <CardContent sx={{ flexGrow: 1, p: { xs: 1.5, sm: 2, md: 2.2 } }}>
                 <Chip
-  label={room.categoryName}
-  size="small"
-  variant="outlined"
-  sx={{
-    mb: 1,
-    color: theme.palette.secondary.main,         // text color
-    borderColor: theme.palette.secondary.main,   // border color
-    fontWeight: "bold",
-  }}
-/>
-
-              
+                  label={room.categoryName}
+                  size="small"
+                  variant="outlined"
+                  sx={{
+                    mb: 1,
+                    color: theme.palette.secondary.main,
+                    borderColor: theme.palette.secondary.main,
+                    fontWeight: "bold",
+                    fontSize: { xs: 10, sm: 11, md: 12 }
+                  }}
+                />
 
                 <Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }}>
-                  <HotelIcon sx={{ fontSize: 18, mr: 0.5, color: "text.secondary" }} />
-                  <Typography variant="body2" color="text.secondary">{room.hotelName}</Typography>
+                  <HotelIcon sx={{ fontSize: { xs: 14, sm: 16 }, mr: 0.5, color: "text.secondary" }} />
+                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: 12, sm: 13 } }}>{room.hotelName}</Typography>
                 </Box>
 
                 <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-                  <LocationOnIcon sx={{ fontSize: 18, mr: 0.5, color: "text.secondary" }} />
-                  <Typography variant="body2" color="text.secondary">{room.cityName}</Typography>
+                  <LocationOnIcon sx={{ fontSize: { xs: 14, sm: 16 }, mr: 0.5, color: "text.secondary" }} />
+                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: 12, sm: 13 } }}>{room.cityName}</Typography>
+                </Box>
+
+                <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+                  <MonetizationOnIcon sx={{ fontSize: { xs: 14, sm: 16 }, mr: 0.5, color: "text.secondary" }} />
+                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: 12, sm: 13 } }}>PKR {room.price.toLocaleString()} per night</Typography>
                 </Box>
 
                 {room.amenities.length > 0 && (
@@ -179,9 +200,9 @@ const AllRooms = () => {
                       const data = amenityIcons[key];
                       const Icon = data?.icon;
                       return Icon ? (
-                        <Box key={index} sx={{ display: "flex", alignItems: "center", gap: 0.5, px: 1, py: 0.5, bgcolor: "rgba(0,0,0,0.05)", borderRadius: 1 }}>
-                          <Icon sx={{ fontSize: 16, color: theme.palette.secondary.main }} />
-                          <Typography variant="caption">{data.label}</Typography>
+                        <Box key={index} sx={{ display: "flex", alignItems: "center", gap: 0.5, px: 1, py: 0.5, bgcolor: "rgba(0,0,0,0.03)", borderRadius: 1 }}>
+                          <Icon sx={{ fontSize: { xs: 14, sm: 16 }, color: theme.palette.secondary.main }} />
+                          <Typography variant="caption" sx={{ fontSize: { xs: 9, sm: 10 } }}>{data.label}</Typography>
                         </Box>
                       ) : null;
                     })}
@@ -189,14 +210,12 @@ const AllRooms = () => {
                 )}
 
                 <Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mt: "auto" }}>
-                  <Box>
-                    <Typography variant="h6" sx={{ fontWeight: "bold", color: theme.palette.secondary.main }}>
-                      PKR {room.price.toLocaleString()}
-                    </Typography>
-                    <Typography variant="caption" color="text.secondary">per night</Typography>
-                  </Box>
-
-                  <Button variant="contained" color="secondary" onClick={() => handleBookNow(room)} sx={{ fontWeight: "bold", px: 1, py: 1, borderRadius: 2, textTransform: "none" }}>
+                  <Button 
+                    variant="outlined" 
+                    color="secondary" 
+                    onClick={() => handleBookNow(room)} 
+                    sx={{ fontWeight: "bold", px: { xs: 1, sm: 1.5 }, py: { xs: 0.8, sm: 1 }, borderRadius: 2, textTransform: "none", fontSize: { xs: 12, sm: 13 } }}
+                  >
                     Book Now
                   </Button>
                 </Box>
@@ -207,7 +226,7 @@ const AllRooms = () => {
       </Grid>
 
       {totalPages > 1 && (
-        <Box sx={{ display: "flex", justifyContent: "center", mt: 5 }}>
+        <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
           <Pagination count={totalPages} page={currentPage} onChange={(_, v) => setCurrentPage(v)} color="secondary" />
         </Box>
       )}
