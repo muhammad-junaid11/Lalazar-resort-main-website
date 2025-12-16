@@ -18,7 +18,6 @@ const WelcomeSection = () => {
         gap: 4,
       }}
     >
-      {/* IMAGE (Proper <img>) */}
       <Box
         sx={{
           flex: 1,
@@ -33,7 +32,8 @@ const WelcomeSection = () => {
           alt="Hotel"
           style={{
             width: '100%',
-            height: '100%',
+    maxWidth: '400px', 
+    height: 'auto',
             objectFit: 'cover',
             borderRadius: '12px',
             boxShadow: theme.shadows[4],
@@ -54,23 +54,20 @@ const WelcomeSection = () => {
         }}
       >
         <Typography variant="h4" sx={{ color: theme.palette.secondary.main, mb: 1 }}>
-          <CottageOutlinedIcon sx={{ fontSize: '3rem' }} />
-        </Typography>
+  <CottageOutlinedIcon sx={{ fontSize: '3rem' }} />
+</Typography>
 
-        <Typography variant="h3" sx={{ fontWeight: 'bold', mb: 1 }}>
-          Welcome To Our
-        </Typography>
+<Typography variant="h3" sx={{ mb: 1 }}>
+  Welcome To Our
+</Typography>
 
-        <Typography
-          variant="h3"
-          sx={{
-            fontWeight: 'bold',
-            mb: 3,
-            color: theme.palette.secondary.main,
-          }}
-        >
-          Luxury Hotel & Resort
-        </Typography>
+<Typography
+  variant="h3"
+  sx={{ mb: 3, color: theme.palette.secondary.main }}
+>
+  Luxury Hotel & Resort
+</Typography>
+
 
         <Typography variant="body1" paragraph sx={{ color: 'text.secondary' }}>
           Indulge in a world of unparalleled luxury and bespoke hospitality at our esteemed hotel and resort, where every moment is crafted to offer an unforgettable experience. Nestled amidst the breathtaking natural beauty of [Location], our property boasts a fusion of contemporary elegance and timeless charm, promising an escape like no other.

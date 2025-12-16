@@ -9,15 +9,16 @@ import AboutUs from "./pages/AboutUs/AboutUs";
 import Activities from "./pages/Activities/Activities";
 import Services from "./pages/Services/Services";
 import ContactUs from "./pages/Contact/ContactUs";
-import FirstStep from "./pages/BookingForm/FirstStep";
 import BookingLayout from "./pages/BookingForm/BookingLayout";
 import ProtectedRoute from "./pages/BookingForm/ProtectedRoute";
 import Rooms from "./pages/Rooms/Rooms";
 import RoomsByCategory from "./pages/Rooms/RoomsByCategory";
+import { Toaster } from 'react-hot-toast';
 function App() {
   return (
     <>
       <CssBaseline />
+      <Toaster position="top-right" />
       <Routes>
         <Route
           path="/"

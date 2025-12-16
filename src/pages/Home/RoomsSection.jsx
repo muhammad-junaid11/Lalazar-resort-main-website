@@ -7,7 +7,6 @@ import {
   useTheme,
   Container,
 } from '@mui/material';
-
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "../../services/Firebase/Firebase";
 
@@ -18,6 +17,8 @@ import executive from '../../assets/executive.webp';
 import activities from '../../assets/img2.webp';
 import contactBg from '../../assets/activities.webp';
 
+import { useNavigate } from "react-router-dom";
+
 // Map DB names → images
 const imageMap = {
   "Deluxe Room": deluxe,
@@ -25,6 +26,7 @@ const imageMap = {
   "Executive Room": executive,
   "Family Room": family,
 };
+
 
 // --- Room Image Component ---
 const RoomImage = ({ src, alt, height = '100%', borderRadius = '4px' }) => (
@@ -43,18 +45,19 @@ const RoomImage = ({ src, alt, height = '100%', borderRadius = '4px' }) => (
 );
 
 // --- Room Card Component ---
-const RoomCard = ({ name, imageSrc }) => (
+const RoomCard = ({ name, imageSrc, onClick }) => (
   <Box
+    onClick={onClick}
     sx={{
       position: 'relative',
-      height: '500px', // FIXED HEIGHT
+      height: '500px',
       overflow: 'hidden',
       borderRadius: '4px',
+      cursor: 'pointer',
       '&:hover .overlay': { backgroundColor: 'rgba(0,0,0,0.4)' },
     }}
   >
     <RoomImage src={imageSrc} alt={name} height="100%" />
-
     <Box
       className="overlay"
       sx={{
@@ -72,36 +75,40 @@ const RoomCard = ({ name, imageSrc }) => (
         padding: 2,
       }}
     >
-      <Typography variant="h6" sx={{ color: 'white', fontWeight: 600, mb: 1, fontFamily: 'serif' }}>
+      <Typography variant="h5" sx={{ color: 'white', mb: 1, fontWeight: "bold" }}>
         {name}
       </Typography>
-
       <Button
-        variant="contained"
-        color="secondary"
-        sx={{
-          width: '100%',
-          maxWidth: '180px',
-          textTransform: 'none',
-          fontWeight: 600,
-          borderRadius: '4px',
-          mt: 1,
-          padding: '12px 18px', // bigger padding
-          fontSize: '1rem', // bigger text
-        }}
-      >
-        Select This Room
-      </Button>
+  variant="contained"
+  sx={{
+    backgroundColor: '#F58220',
+    color: 'white',
+    textTransform: 'uppercase',
+    fontWeight: 'bold',
+    borderRadius: '4px',
+    padding: '10px 15px',
+    fontSize: '0.8rem',
+    textDecoration: 'underline',
+    alignSelf: 'flex-start', // <-- prevents full width stretch
+    '&:hover': {
+      backgroundColor: (theme) => theme.palette.secondary.dark, // automatically darker variant
+    },
+  }}
+>
+  Select This Room
+</Button>
+
     </Box>
   </Box>
 );
 
 // --- Bottom Section (Other Activities) ---
-const BottomSection = () => (
+const BottomSection = ({ onClick }) => (
   <Box
+    onClick={onClick}
     sx={{
       position: 'relative',
-      height: '500px', // same as RoomCard
+      height: '500px',
       overflow: 'hidden',
       borderRadius: '4px',
       cursor: 'pointer',
@@ -109,7 +116,6 @@ const BottomSection = () => (
     }}
   >
     <RoomImage src={activities} alt="Other Activities" height="100%" />
-
     <Box
       className="overlay"
       sx={{
@@ -129,14 +135,8 @@ const BottomSection = () => (
       }}
     >
       <Typography
-        variant="h6"
-        sx={{
-          color: 'white',
-          fontWeight: 600,
-          fontFamily: 'serif',
-          textShadow: '1px 1px 3px rgba(0,0,0,0.9)',
-          fontSize: '1.2rem',
-        }}
+        variant="h5"
+        sx={{ color: 'white', fontWeight: "bold", mb: 2 }}
       >
         Other Activities
       </Typography>
@@ -145,22 +145,20 @@ const BottomSection = () => (
 );
 
 // --- Contact Banner ---
-const ContactBanner = () => {
-  const theme = useTheme();
-
+const ContactBanner = ({ onClick }) => {
   return (
     <Box
       sx={{
         width: '100%',
-        height: '250px', // bigger banner
+        height: '250px',
         mt: 1,
         position: 'relative',
         overflow: 'hidden',
         borderRadius: '4px',
       }}
     >
+      {/* Darker default background */}
       <RoomImage src={contactBg} alt="Contact" height="100%" borderRadius="0" />
-
       <Box
         sx={{
           position: 'absolute',
@@ -168,39 +166,64 @@ const ContactBanner = () => {
           left: 0,
           width: '100%',
           height: '100%',
-          backgroundColor: 'rgba(0,0,0,0.8)',
+          backgroundColor: 'rgba(0,0,0,0.7)', // darker default
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
-          padding: { xs: 2, md: 4 },
-          flexDirection: { xs: 'column', sm: 'row' },
-          textAlign: { xs: 'center', sm: 'left' },
-          '&:hover': {
-      backgroundColor: 'rgba(0,0,0,0.9)', // slightly darker on hover
-    },
+          padding: { xs: 2, md: 8 },
+          flexDirection: { xs: 'column', md: 'row' },
+          gap: 2,
         }}
       >
-        <Typography
-          sx={{
-            color: 'white',
-            fontWeight: 700,
-            fontFamily: 'serif',
-            fontSize: { xs: '1.5rem', sm: '2rem' },
-          }}
-        >
-          Contact us now! <br/> <Box component="span" sx={{ fontSize: '1.3em' }}>0332 8888489</Box>
-        </Typography>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 3, flexDirection: { xs: 'column', sm: 'row' }, textAlign: { xs: 'center', sm: 'left' } }}>
+          <Box sx={{
+            width: 80,
+            height: 80,
+            borderRadius: '50%',
+            border: '2px solid white',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            p: 1.5,
+            flexShrink: 0
+          }}>
+            <svg viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" style={{ width: '100%', height: '100%' }}>
+              <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" />
+              <path d="M7 2v20" />
+              <path d="M21 15V2v0a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" />
+            </svg>
+          </Box>
+
+          <Box>
+            <Typography variant="h4" component="div" sx={{ color: 'white', fontFamily: 'serif', display: 'flex', flexDirection: { xs: 'column', lg: 'row' }, alignItems: { xs: 'center', lg: 'baseline' }, gap: 1, lineHeight: 1.2 }}>
+              <span style={{ fontWeight: 'bold' }}>Contact us now!</span>
+              <span style={{ fontWeight: '400', textDecoration: 'underline', textUnderlineOffset: '4px' }}>0332 8888489</span>
+            </Typography>
+            <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.9)', mt: 1, fontSize: '0.9rem' }}>
+              Get support anytime — 24/7 our staff is ready for you.
+            </Typography>
+          </Box>
+        </Box>
 
         <Button
           variant="contained"
-          color="secondary"
+          onClick={onClick}
           sx={{
-            minWidth: '180px',
-            padding: '14px 20px',
-            fontSize: '1.1rem',
+            backgroundColor: '#F58220',
+            color: 'white',
+            textTransform: 'uppercase',
+            fontWeight: 'bold',
+            borderRadius: '4px',
+            padding: '10px 25px',
+            fontSize: '1rem',
+            minWidth: '140px',
+            textDecoration: 'underline',
+           '&:hover': {
+      backgroundColor: (theme) => theme.palette.secondary.dark, // automatically darker variant
+    },
           }}
         >
-          Contact
+          CONTACT
         </Button>
       </Box>
     </Box>
@@ -210,71 +233,80 @@ const ContactBanner = () => {
 // --- Main Component ---
 const RoomsSection = () => {
   const theme = useTheme();
+  const navigate = useNavigate();
   const [roomData, setRoomData] = useState([]);
 
-  // FETCH CATEGORIES FROM FIRESTORE
   useEffect(() => {
     const fetchCategories = async () => {
       try {
         const snap = await getDocs(collection(db, "roomCategory"));
-
         const list = snap.docs.map(doc => ({
           id: doc.id,
           name: doc.data().categoryName,
-          image: imageMap[doc.data().categoryName] || deluxe, // default fallback
+          image: imageMap[doc.data().categoryName] || deluxe,
         }));
-
         setRoomData(list);
       } catch (error) {
         console.error("Error loading categories:", error);
       }
     };
-
     fetchCategories();
   }, []);
 
+  const handleRoomClick = (room) => {
+    const slug = room.name.toLowerCase().replace(/\s+/g, "-");
+    navigate(`/rooms/${slug}`);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleActivitiesClick = () => {
+    navigate("/activities");
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
+  const handleContactClick = () => {
+    navigate("/contact");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   return (
     <Container maxWidth="lg" sx={{ py: 6 }}>
-      {/* Title */}
       <Box textAlign="center" mb={6}>
-        <Typography
-          variant="h2"
-          sx={{
-            fontWeight: 700,
-            mb: 2,
-            fontFamily: '"Georgia",serif',
-            color: theme.palette.secondary.main,
-            fontSize: { xs: '2.5rem',sm:'3rem', md: '3.5rem' },
-          }}
-        >
+        <Typography variant="h2" sx={{ mb: 2, color: theme.palette.secondary.main }}>
           Our Rooms
         </Typography>
-
-        <Typography variant="body1" sx={{ maxWidth: '700px', mx: 'auto', color: 'text.secondary', fontWeight: 300 }}>
+        <Typography variant="body1" sx={{ maxWidth: '700px', mx: 'auto', color: 'text.secondary' }}>
           Experience a haven of tranquility and indulgence in our curated rooms.
         </Typography>
       </Box>
 
-      {/* GRID (preserve your layout exactly) */}
       <Grid container spacing={2}>
         {roomData.slice(0, 3).map((room) => (
           <Grid size={{ xs: 12, sm: 4 }} key={room.id}>
-            <RoomCard name={room.name} imageSrc={room.image} />
+            <RoomCard
+              name={room.name}
+              imageSrc={room.image}
+              onClick={() => handleRoomClick(room)}
+            />
           </Grid>
         ))}
 
         {roomData[3] && (
           <Grid size={{ xs: 12, sm: 4 }}>
-            <RoomCard name={roomData[3].name} imageSrc={roomData[3].image} />
+            <RoomCard
+              name={roomData[3].name}
+              imageSrc={roomData[3].image}
+              onClick={() => handleRoomClick(roomData[3])}
+            />
           </Grid>
         )}
 
         <Grid size={{ xs: 12, sm: 8 }}>
-          <BottomSection />
+          <BottomSection onClick={handleActivitiesClick} />
         </Grid>
 
         <Grid size={{ xs: 12 }}>
-          <ContactBanner />
+          <ContactBanner onClick={handleContactClick} />
         </Grid>
       </Grid>
     </Container>

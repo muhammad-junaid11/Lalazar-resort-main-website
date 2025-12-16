@@ -70,19 +70,19 @@ const CoreFeatureAbout = () => {
       }}
     >
       <Icon sx={{ color: theme.palette.secondary.main, fontSize: 40, mb: 1.5 }} />
-      <Typography variant="h6" sx={{ fontWeight: 700, mb: 1 }}>
-        {title}
-      </Typography>
-      <Typography variant="body2" color="text.secondary">
-        {description}
-      </Typography>
+      <Typography variant="h6" sx={{ mb: 1,fontWeight:"bold" }}>
+  {title}
+</Typography>
+<Typography variant="body1">
+  {description}
+</Typography>
+
     </Box>
   );
 
   return (
     <Box sx={{ py: { xs: 8, md: 12 }, bgcolor: 'white' }}>
       <Container maxWidth="lg">
-        {/* Section Header */}
         <Box textAlign="center" mb={6}>
           <Typography 
             variant="overline" 
@@ -95,32 +95,27 @@ const CoreFeatureAbout = () => {
             Features
           </Typography>
           <Typography
-            variant="h3"
-             sx={{
-            fontWeight: 700,
-            mb: 2,
-            fontFamily: '"Georgia",serif',
-            color: theme.palette.secondary.main,
-            fontSize: { xs: '2.5rem',sm:'3rem', md: '3.5rem' },
-          }}
-          >
-            Core Facilities
-          </Typography>
+  variant="h3"
+  sx={{
+    mb: 2,
+    color: theme.palette.secondary.main,
+  }}
+>
+  Core Facilities
+</Typography>
+
         </Box>
 
-        {/* Feature Grid */}
         <Grid container spacing={3} justifyContent="center">
           {features.map((feature, index) => (
             <Grid 
               key={index} 
               item 
-              // Enforcing the requested Grid size structure
               size={{ xs: 12, sm: 6, md: 4, lg: 3 }}
             >
               <FeatureCard {...feature} />
             </Grid>
           ))}
-          {/* Add an empty grid item to complete the 4-column layout for the last row (3 + 1) */}
           <Grid item size={{ md: 4, lg: 3 }} sx={{ display: { xs: 'none', md: 'block' } }} />
         </Grid>
       </Container>

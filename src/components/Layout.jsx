@@ -39,6 +39,7 @@ const Layout = ({ children, navColor = "transparent" }) => {
   const toSlug = (text) =>
     text.toLowerCase().replace(/\s+/g, "-").replace(/[^\w-]+/g, "");
 
+  // Auth state
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (user) => {
       setIsLoggedIn(!!user);
@@ -109,7 +110,7 @@ const Layout = ({ children, navColor = "transparent" }) => {
     fetchRoomCategories();
   }, []);
 
-  const Dropdown = ({ selected, theme }) => {
+  const Dropdown = ({ selected }) => {
     const [anchorEl, setAnchorEl] = useState(null);
     const open = Boolean(anchorEl);
     const handleClick = (event) => setAnchorEl(anchorEl ? null : event.currentTarget);
@@ -123,25 +124,19 @@ const Layout = ({ children, navColor = "transparent" }) => {
           aria-haspopup="true"
           aria-expanded={open ? "true" : undefined}
           onClick={handleClick}
-          endIcon={
-            <KeyboardArrowDownIcon
-              sx={{ color: theme.palette.primary.contrastText, fontSize: 20 }}
-            />
-          }
+          endIcon={<KeyboardArrowDownIcon sx={{ color: "#fff", fontSize: 20 }} />}
           sx={{
-            color: theme.palette.primary.contrastText,
+            color: "#fff",
             textTransform: "none",
             fontSize: "16px",
             padding: 0,
             minWidth: "auto",
             cursor: "pointer",
-            borderBottom: selected
-              ? `2px solid ${theme.palette.secondary.main}`
-              : "2px solid transparent",
+            borderBottom: selected ? `2px solid ${theme.palette.secondary.main}` : "2px solid transparent",
             ":hover": {
               backgroundColor: "transparent",
               borderBottom: `2px solid ${theme.palette.secondary.main}`,
-              color: theme.palette.primary.contrastText,
+              color: "#fff",
             },
             transition: "border-bottom 0.3s ease",
           }}
@@ -182,21 +177,19 @@ const Layout = ({ children, navColor = "transparent" }) => {
     );
   };
 
-  const NavItem = ({ to, children, selected, theme }) => (
+  const NavItem = ({ to, children, selected }) => (
     <Typography
       component={Link}
       to={to}
       sx={{
-        color: theme.palette.primary.contrastText,
+        color: "#fff",
         textDecoration: "none",
         fontSize: "16px",
         pb: 0.5,
-        borderBottom: selected
-          ? `2px solid ${theme.palette.secondary.main}`
-          : "2px solid transparent",
+        borderBottom: selected ? `2px solid ${theme.palette.secondary.main}` : "2px solid transparent",
         ":hover": {
           borderBottom: `2px solid ${theme.palette.secondary.main}`,
-          color: theme.palette.primary.contrastText,
+          color: "#fff",
         },
         transition: "border-bottom 0.3s ease",
       }}
@@ -205,31 +198,30 @@ const Layout = ({ children, navColor = "transparent" }) => {
     </Typography>
   );
 
- const MobileNavItem = ({ to, label, onClick }) => (
-  <MenuItem
-    component={to ? Link : "div"}
-    to={to}
-    onClick={onClick}
-    sx={{
-      display: "flex",
-      flexDirection: "column",
-      alignItems: "flex-start",
-      width: "100%",
-      paddingY: 1,
-      fontWeight: 500,
-      fontSize: 16,
-      color: "text.primary",
-      textDecoration: "none",
-      ":hover": {
-        color: "secondary.main",
-        backgroundColor: "transparent",
-      },
-    }}
-  >
-    {label}
-  </MenuItem>
-);
-
+  const MobileNavItem = ({ to, label, onClick }) => (
+    <MenuItem
+      component={to ? Link : "div"}
+      to={to}
+      onClick={onClick}
+      sx={{
+        display: "flex",
+        flexDirection: "column",
+        alignItems: "flex-start",
+        width: "100%",
+        paddingY: 1,
+        fontWeight: 500,
+        fontSize: 16,
+        color: "text.primary",
+        textDecoration: "none",
+        ":hover": {
+          color: "secondary.main",
+          backgroundColor: "transparent",
+        },
+      }}
+    >
+      {label}
+    </MenuItem>
+  );
 
   const currentYear = new Date().getFullYear();
 
@@ -239,101 +231,31 @@ const Layout = ({ children, navColor = "transparent" }) => {
       <AppBar
         position="absolute"
         sx={{
-          background:
-            navColor === "transparent"
-              ? "transparent"
-              : theme.palette[navColor].main,
+          background: navColor === "transparent" ? "transparent" : theme.palette[navColor].main,
           boxShadow: "none",
           px: { xs: 2, md: 12 },
           py: { md: 1 },
           zIndex: theme.zIndex.appBar + 1,
         }}
       >
-        <Toolbar
-          sx={{
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-            width: "100%",
-            backgroundColor: "transparent",
-            minHeight: { xs: 80, md: "auto" },
-          }}
-        >
-          <Box
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              gap: { xs: 0, md: 5 },
-              backgroundColor: "transparent",
-            }}
-          >
-            <Box
-              component="img"
-              src={logo}
-              alt="logo"
-              sx={{
-                height: { xs: 60, md: 70 },
-                p: 0.5,
-                width: "auto",
-                mt: 1,
-                border: "3px solid white",
-                boxShadow: "0 0 10px rgba(255,255,255,0.4)",
-                bgcolor: "transparent",
-              }}
-            />
+        <Toolbar sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", width: "100%", minHeight: { xs: 80, md: "auto" } }}>
+          {/* Logo & Desktop Nav */}
+          <Box sx={{ display: "flex", alignItems: "center", gap: { xs: 0, md: 5 }, backgroundColor: "transparent" }}>
+            <Box component="img" src={logo} alt="logo" sx={{ height: { xs: 60, md: 70 }, p: 0.5, width: "auto", mt: 1, border: "3px solid white", boxShadow: "0 0 10px rgba(255,255,255,0.4)" }} />
             <Box sx={{ display: { xs: "none", md: "flex" }, gap: 5, pl: 4 }}>
-              <NavItem to="/" selected={isSelected("/")} theme={theme}>
-                Home
-              </NavItem>
-              <NavItem to="/about" selected={isSelected("/about")} theme={theme}>
-                About
-              </NavItem>
-              <NavItem
-                to="/activities"
-                selected={isSelected("/activities")}
-                theme={theme}
-              >
-                Activities
-              </NavItem>
-              <Dropdown selected={isSelected("/rooms")} theme={theme} />
-              <NavItem
-                to="/services"
-                selected={isSelected("/services")}
-                theme={theme}
-              >
-                Services
-              </NavItem>
-              <NavItem
-                to="/contact"
-                selected={isSelected("/contact")}
-                theme={theme}
-              >
-                Contact
-              </NavItem>
-
-              <Typography
-                onClick={handleBookNow}
-                sx={{
-                  cursor: "pointer",
-                  color: theme.palette.primary.contrastText,
-                  textDecoration: "none",
-                  fontSize: "16px",
-                  pb: 0.5,
-                  borderBottom: isSelected("/book")
-                    ? `2px solid ${theme.palette.secondary.main}`
-                    : "2px solid transparent",
-                  ":hover": {
-                    borderBottom: `2px solid ${theme.palette.secondary.main}`,
-                    color: theme.palette.primary.contrastText,
-                  },
-                  transition: "border-bottom 0.3s ease",
-                }}
-              >
+              <NavItem to="/" selected={isSelected("/")}>Home</NavItem>
+              <NavItem to="/about" selected={isSelected("/about")}>About</NavItem>
+              <NavItem to="/activities" selected={isSelected("/activities")}>Activities</NavItem>
+              <Dropdown selected={isSelected("/rooms")} />
+              <NavItem to="/services" selected={isSelected("/services")}>Services</NavItem>
+              <NavItem to="/contact" selected={isSelected("/contact")}>Contact</NavItem>
+              <Typography onClick={handleBookNow} sx={{ cursor: "pointer", color: "#fff", fontSize: "16px", pb: 0.5, borderBottom: isSelected("/book") ? `2px solid ${theme.palette.secondary.main}` : "2px solid transparent", ":hover": { borderBottom: `2px solid ${theme.palette.secondary.main}` } }}>
                 Book Now
               </Typography>
             </Box>
           </Box>
 
+          {/* Desktop User Menu */}
           <Box sx={{ display: { xs: "none", md: "flex" }, gap: 2 }}>
             {userName ? (
               <>
@@ -343,25 +265,8 @@ const Layout = ({ children, navColor = "transparent" }) => {
                   aria-haspopup="true"
                   aria-expanded={Boolean(userMenuAnchorEl) ? "true" : undefined}
                   onClick={handleUserMenuClick}
-                  endIcon={
-                    <KeyboardArrowDownIcon
-                      sx={{
-                        color: theme.palette.primary.contrastText,
-                        fontSize: 20,
-                      }}
-                    />
-                  }
-                  sx={{
-                    color: theme.palette.primary.contrastText,
-                    textTransform: "none",
-                    fontWeight: "bold",
-                    padding: 0,
-                    minWidth: "auto",
-                    ":hover": {
-                      backgroundColor: "transparent",
-                      color: theme.palette.secondary.main,
-                    },
-                  }}
+                  endIcon={<KeyboardArrowDownIcon sx={{ color: "#fff", fontSize: 20 }} />}
+                  sx={{ color: "#fff", textTransform: "none", fontWeight: "bold", padding: 0, minWidth: "auto", ":hover": { backgroundColor: "transparent", color: theme.palette.secondary.main } }}
                 >
                   {userName}
                 </Button>
@@ -377,141 +282,76 @@ const Layout = ({ children, navColor = "transparent" }) => {
               </>
             ) : (
               <>
-                <Button
-                  component={Link}
-                  to="/signin"
-                  onClick={() => localStorage.removeItem("redirectAfterLogin")}
-                  sx={{
-                    color: theme.palette.primary.contrastText,
-                    border: `1px solid ${theme.palette.primary.contrastText}`,
-                    textTransform: "none",
-                    px: 2,
-                    py: 0.5,
-                    fontWeight: "bold",
-                  }}
-                >
-                  Sign In
-                </Button>
-                <Button
-                  component={Link}
-                  to="/signup"
-                  sx={{
-                    color: theme.palette.primary.main,
-                    backgroundColor: theme.palette.primary.contrastText,
-                    textTransform: "none",
-                    px: 2,
-                    py: 0.5,
-                    fontWeight: "bold",
-                    ":hover": { backgroundColor: theme.palette.grey[300] },
-                  }}
-                >
-                  Sign Up
-                </Button>
+                <Button component={Link} to="/signin" onClick={() => localStorage.removeItem("redirectAfterLogin")} sx={{ color: "#fff", border: "1px solid #fff", textTransform: "none", px: 2, py: 0.5, fontWeight: "bold" }}>Sign In</Button>
+                <Button component={Link} to="/signup" sx={{ color: theme.palette.primary.main, backgroundColor: "#fff", textTransform: "none", px: 2, py: 0.5, fontWeight: "bold", ":hover": { backgroundColor: theme.palette.grey[300] } }}>Sign Up</Button>
               </>
             )}
           </Box>
 
-          <IconButton
-            sx={{ display: { xs: "block", md: "none" } }}
-            onClick={() => setMobileOpen(true)}
-          >
-            <MenuIcon sx={{ color: theme.palette.primary.contrastText }} />
+          {/* Mobile Menu Icon */}
+          <IconButton sx={{ display: { xs: "block", md: "none" } }} onClick={() => setMobileOpen(true)}>
+            <MenuIcon sx={{ color: "#fff" }} />
           </IconButton>
 
           {/* Mobile Drawer */}
           <Drawer
-  anchor="right"
-  open={mobileOpen}
-  onClose={() => setMobileOpen(false)}
-  PaperProps={{
-    sx: {
-      width: "70vw",        // 70% of viewport width
-      height: "100%",
-      bgcolor: theme.palette.background.paper,
-      // position: "relative",  <-- REMOVE THIS
-    },
-  }}
-  BackdropProps={{
-    sx: {
-      backgroundColor: "rgba(0,0,0,0.3)",
-    },
-  }}
->
- <Box sx={{ p: 2 }}>
-  {/* Logo + Close Button */}
-  <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
-    <Box component="img" src={logo} alt="logo" sx={{ height: 60, width: "auto" }} />
-    <IconButton onClick={() => setMobileOpen(false)}>
-      <CloseIcon />
-    </IconButton>
-  </Box>
+            anchor="right"
+            open={mobileOpen}
+            onClose={() => setMobileOpen(false)}
+            PaperProps={{ sx: { width: "70vw", height: "100%", bgcolor: theme.palette.background.paper } }}
+            BackdropProps={{ sx: { backgroundColor: "rgba(0,0,0,0.3)" } }}
+          >
+            <Box sx={{ p: 2 }}>
+              {/* Logo + Close */}
+              <Box sx={{ display: "flex", justifyContent: "space-between", mb: 3 }}>
+                <Box component="img" src={logo} alt="logo" sx={{ height: 60, width: "auto" }} />
+                <IconButton onClick={() => setMobileOpen(false)}>
+                  <CloseIcon />
+                </IconButton>
+              </Box>
 
-  {/* Main Items */}
-  <MobileNavItem to="/" label="Home" onClick={() => setMobileOpen(false)} />
-  <MobileNavItem to="/about" label="About" onClick={() => setMobileOpen(false)} />
-  <MobileNavItem to="/activities" label="Activities" onClick={() => setMobileOpen(false)} />
+              {/* Mobile Nav Items */}
+              <MobileNavItem to="/" label="Home" onClick={() => setMobileOpen(false)} />
+              <MobileNavItem to="/about" label="About" onClick={() => setMobileOpen(false)} />
+              <MobileNavItem to="/activities" label="Activities" onClick={() => setMobileOpen(false)} />
 
-  {/* Rooms Dropdown */}
-{/* Rooms Dropdown */}
-<Box sx={{ width: "100%" }}>
-  <MobileNavItem
-    label="Rooms"
-    onClick={() => setMobileRoomsOpen(!mobileRoomsOpen)}
-    sx={{
-      display: "flex",
-      justifyContent: "space-between",
-      width: "100%",
-    }}
-  >
-    <KeyboardArrowDownIcon sx={{ fontSize: 20 }} />
-  </MobileNavItem>
+              {/* Rooms Dropdown */}
+              <Box sx={{ width: "100%" }}>
+                <MobileNavItem
+                  label="Rooms"
+                  onClick={() => setMobileRoomsOpen(!mobileRoomsOpen)}
+                  sx={{ display: "flex", justifyContent: "space-between", width: "100%" }}
+                >
+                  <KeyboardArrowDownIcon sx={{ fontSize: 20 }} />
+                </MobileNavItem>
+                {mobileRoomsOpen && (
+                  <Box sx={{ pl: 3, display: "flex", flexDirection: "column", gap: 0.5 }}>
+                    <MobileNavItem to="/rooms" label="All Rooms" onClick={() => setMobileOpen(false)} />
+                    {roomCategories.map((item) => (
+                      <MobileNavItem
+                        key={item.id}
+                        to={`/rooms/${toSlug(item.categoryName)}`}
+                        label={item.categoryName}
+                        onClick={() => setMobileOpen(false)}
+                      />
+                    ))}
+                  </Box>
+                )}
+              </Box>
 
-  {mobileRoomsOpen && (
-    <Box sx={{ pl: 3, display: "flex", flexDirection: "column", gap: 0.5 }}>
-      <MobileNavItem
-        to="/rooms"
-        label="All Rooms"
-        onClick={() => setMobileOpen(false)}
-      />
-      {roomCategories.map((item) => (
-        <MobileNavItem
-          key={item.id}
-          to={`/rooms/${toSlug(item.categoryName)}`}
-          label={item.categoryName}
-          onClick={() => setMobileOpen(false)}
-        />
-      ))}
-    </Box>
-  )}
-</Box>
+              <MobileNavItem to="/services" label="Services" onClick={() => setMobileOpen(false)} />
+              <MobileNavItem to="/contact" label="Contact" onClick={() => setMobileOpen(false)} />
+              <MobileNavItem label="Book Now" onClick={() => { setMobileOpen(false); handleBookNow(); }} />
 
-
-  <MobileNavItem to="/services" label="Services" onClick={() => setMobileOpen(false)} />
-  <MobileNavItem to="/contact" label="Contact" onClick={() => setMobileOpen(false)} />
-  <MobileNavItem
-    label="Book Now"
-    onClick={() => {
-      setMobileOpen(false);
-      handleBookNow();
-    }}
-  />
-  
-  {userName ? (
-    <MobileNavItem
-      label="Logout"
-      onClick={() => {
-        handleLogout();
-        setMobileOpen(false);
-      }}
-    />
-  ) : (
-    <>
-      <MobileNavItem to="/signin" label="Sign In" onClick={() => setMobileOpen(false)} />
-      <MobileNavItem to="/signup" label="Sign Up" onClick={() => setMobileOpen(false)} />
-    </>
-  )}
-</Box>
-
+              {userName ? (
+                <MobileNavItem label="Logout" onClick={() => { handleLogout(); setMobileOpen(false); }} />
+              ) : (
+                <>
+                  <MobileNavItem to="/signin" label="Sign In" onClick={() => setMobileOpen(false)} />
+                  <MobileNavItem to="/signup" label="Sign Up" onClick={() => setMobileOpen(false)} />
+                </>
+              )}
+            </Box>
           </Drawer>
         </Toolbar>
       </AppBar>
@@ -522,7 +362,7 @@ const Layout = ({ children, navColor = "transparent" }) => {
       </Box>
 
       {/* Footer */}
-      <Box sx={{ bgcolor: "white", pt: 10 }}>
+     <Box sx={{ bgcolor: "white", pt: 10 }}>
         <Container maxWidth="lg">
           <Grid container spacing={6} justifyContent="center">
             <Grid size={{ xs: 12, md: 4 }} textAlign={{ xs: "center", md: "left" }}>

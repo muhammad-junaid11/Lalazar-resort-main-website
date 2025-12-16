@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { Box, Typography, Container, Grid } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
+import { useLocation } from 'react-router-dom';
 
 import bonfireImage from '../../assets/bonfire.webp'; 
 import trekkingImage from '../../assets/trekking.webp'; 
@@ -35,79 +36,86 @@ const activities = [
 
 const ActivitiesTypes = () => {
   const theme = useTheme();
+  const location = useLocation();
   const textContentPadding = 6;
+
+  // Scroll to section if location.state.scrollTo exists
+  useEffect(() => {
+    if (location.state?.scrollTo) {
+      const section = document.getElementById(location.state.scrollTo);
+      if (section) {
+        setTimeout(() => {
+          section.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }, 100);
+      }
+    }
+  }, [location]);
 
   return (
     <Box sx={{ py: { xs: 8, md: 12 }, bgcolor: '#f8f8f8' }}> 
       <Container maxWidth="lg" disableGutters>
-        {activities.map((activity) => (
-          <Grid
-            container
-            spacing={0}
-            alignItems="stretch"
-            key={activity.id}
-            direction={{ xs: 'column', md: activity.imageOnRight ? 'row' : 'row-reverse' }}
-          >
-            {/* Text Content */}
+        {activities.map((activity) => {
+          const sectionId = activity.id === 2 ? 'trekking-section' : undefined; // ID for Trekking
+
+          return (
             <Grid
-              item
-              size={{ xs: 12, md: 6 }}
-              sx={{ 
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center', 
-                bgcolor: 'white', 
-                py: { xs: 4, md: 0 }, 
-                minHeight: { md: activity.imageHeight.md }, 
-              }}
+              container
+              spacing={0}
+              alignItems="stretch"
+              key={activity.id}
+              direction={{ xs: 'column', md: activity.imageOnRight ? 'row' : 'row-reverse' }}
+              id={sectionId}
             >
-              <Box
-                sx={{
-                  width: { xs: '100%', md: '85%' },
-                  mr: activity.imageOnRight ? 'auto' : 0,
-                  ml: activity.imageOnRight ? 0 : 'auto',
-                  px: { xs: 3, md: 0 },
-                  pl: activity.imageOnRight ? { md: textContentPadding } : { md: 0 },
-                  pr: activity.imageOnRight ? { md: 0 } : { md: textContentPadding },
+              {/* Text Content */}
+              <Grid
+                item
+                size={{ xs: 12, md: 6 }}
+                sx={{ 
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center', 
+                  bgcolor: 'white', 
+                  py: { xs: 4, md: 0 }, 
+                  minHeight: { md: activity.imageHeight.md }, 
                 }}
               >
-                <Typography
-                  variant="h3"
+                <Box
                   sx={{
-                    fontFamily: 'Georgia, Times New Roman, Times, serif',
-                    fontWeight: 530,
-                    fontSize: { xs: '2rem', md: '2.5rem' },
-                    mb: 1.5,
+                    width: { xs: '100%', md: '85%' },
+                    mr: activity.imageOnRight ? 'auto' : 0,
+                    ml: activity.imageOnRight ? 0 : 'auto',
+                    px: { xs: 3, md: 0 },
+                    pl: activity.imageOnRight ? { md: textContentPadding } : { md: 0 },
+                    pr: activity.imageOnRight ? { md: 0 } : { md: textContentPadding },
                   }}
                 >
-                  {activity.title}
-                </Typography>
-                <Typography
-                  variant="body1"
-                  color="text.secondary"
-                  sx={{ lineHeight: 1.6, fontSize: { xs: '1rem', md: '1.1rem' }, textAlign: 'left' }}
-                >
-                  {activity.description}
-                </Typography>
-              </Box>
-            </Grid>
+                  <Typography variant="h3" sx={{ mb: 1.5 }}>
+                    {activity.title}
+                  </Typography>
 
-            {/* Image */}
-            <Grid item size={{ xs: 12, md: 6 }}>
-              <Box
-                component="img"
-                src={activity.image}
-                alt={activity.title}
-                sx={{
-                  width: '100%',
-                  height: activity.imageHeight,
-                  objectFit: 'cover',
-                  display: 'block',
-                }}
-              />
+                  <Typography variant="body1" color="text.secondary" sx={{ textAlign: 'left' }}>
+                    {activity.description}
+                  </Typography>
+                </Box>
+              </Grid>
+
+              {/* Image */}
+              <Grid item size={{ xs: 12, md: 6 }}>
+                <Box
+                  component="img"
+                  src={activity.image}
+                  alt={activity.title}
+                  sx={{
+                    width: '100%',
+                    height: activity.imageHeight,
+                    objectFit: 'cover',
+                    display: 'block',
+                  }}
+                />
+              </Grid>
             </Grid>
-          </Grid>
-        ))}
+          );
+        })}
       </Container>
     </Box>
   );

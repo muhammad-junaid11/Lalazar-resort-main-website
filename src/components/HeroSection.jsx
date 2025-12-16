@@ -41,9 +41,10 @@ const HeroSection = ({ title, subtitle, bgImage }) => {
         }}
       >
         <Link to="/" style={{ color: 'inherit', textDecoration: 'none' }}>
-          Home
-        </Link>{' '}
-        | {subtitle}
+  Home
+</Link>
+{subtitle && ` | ${subtitle}`}
+
       </Typography>
 
       <Typography

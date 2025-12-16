@@ -180,7 +180,7 @@ const AllRooms = () => {
 
                 <Box sx={{ display: "flex", alignItems: "center", mb: 0.5 }}>
                   <HotelIcon sx={{ fontSize: { xs: 14, sm: 16 }, mr: 0.5, color: "text.secondary" }} />
-                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: { xs: 12, sm: 13 } }}>{room.hotelName}</Typography>
+                  <Typography variant="body2" color="text.secondary">{room.hotelName}</Typography>
                 </Box>
 
                 <Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>

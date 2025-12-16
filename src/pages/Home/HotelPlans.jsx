@@ -12,12 +12,13 @@ const HotelPlans = () => {
       {features.map((feature, index) => (
         <ListItem key={index} disablePadding sx={{ py: 0.5 }}>
           <ListItemIcon sx={{ minWidth: '30px' }}>
-            <CheckIcon sx={{ color: theme.palette.primary.main, fontSize: 18 }} />
+            <CheckIcon sx={{ color: theme.palette.secondary.main, fontSize: 18 }} />
           </ListItemIcon>
           <ListItemText
-            primary={feature}
-            primaryTypographyProps={{ style: { color: theme.palette.text.primary }, fontSize: '0.95rem' }}
-          />
+  primary={feature}
+  primaryTypographyProps={{ color: 'text.secondary', variant: 'body1' }}
+/>
+
         </ListItem>
       ))}
     </List>
@@ -81,15 +82,14 @@ const HotelPlans = () => {
                   }}
                 >
                   <CardContent>
-                    <Typography variant="h6" sx={{ mb: 1, color: theme.palette.primary.main, fontWeight: 'bold' }}>
-                      {plan.title}
-                    </Typography>
-                    <Typography variant="h3" sx={{ fontWeight: 'bold', mb: 3, color: theme.palette.primary.main }}>
-  {plan.price}
-  <Box component="span" sx={{ ml: 1, fontSize: '1.25rem', verticalAlign: 'super' }}>
-    Rs
-  </Box>
+                    <Typography variant="h6" sx={{ mb: 1, color: theme.palette.primary.main }}>
+  {plan.title}
 </Typography>
+<Typography variant="h3" sx={{ mb: 3, color: theme.palette.primary.main }}>
+  {plan.price}
+  <Box component="span" sx={{ ml: 1, fontSize: '1.25rem', verticalAlign: 'super' }}>Rs</Box>
+</Typography>
+
 
                     <FeatureList features={plan.features} />
                   </CardContent>
@@ -115,7 +115,6 @@ const HotelPlans = () => {
           </Grid>
         </Grid>
 
-        {/* Right Side: Centered Hotel Plans */}
         <Grid
           item
          size={{ xs: 12, sm: 6}}
@@ -128,12 +127,14 @@ const HotelPlans = () => {
         >
           <Box sx={{ textAlign: 'center', width: { xs: '100%', sm: '500px' } }}>
             <HomeIcon sx={{ fontSize: 40, color: theme.palette.secondary.main, mb: 1 }} />
-            <Typography variant="h2" sx={{ fontWeight: 400, mb: 2, fontSize: { xs: '2rem', sm: '3rem' } }}>
-              Hotel Plans
-            </Typography>
-            <Typography variant="body1" sx={{ mb: 5, fontSize: '1.1rem' }}>
-              Choose from our diverse range of hotel plans tailored to meet your unique preferences.
-            </Typography>
+            <Typography variant="h2" sx={{ mb: 2 }}>
+  Hotel Plans
+</Typography>
+
+            <Typography variant="body1" sx={{ mb: 5, color: 'white'  }}>
+  Choose from our diverse range of hotel plans tailored to meet your unique preferences.
+</Typography>
+
 
             {/* Flexible + Anytime horizontal boxes with equal width */}
             <Grid container spacing={3} sx={{ justifyContent: 'center' }}>
@@ -151,8 +152,8 @@ const HotelPlans = () => {
                       alignItems: 'center',
                     }}
                   >
-                    <Typography variant="h6" sx={{ fontWeight: 'bold', mb: 1 }}>{title}</Typography>
-                    <Typography variant="body2" sx={{ opacity: 0.85, textAlign: 'center' }}>
+                    <Typography variant="h6" sx={{ mb: 1 }}>{title}</Typography>
+<Typography variant="body2" sx={{ opacity: 0.85, textAlign: 'center' }}>
                       {title === 'Flexible Price'
                         ? 'Prices are based on the services and facilities provided.'
                         : 'Freedom to checkout at any time according to your schedule.'}

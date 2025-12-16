@@ -84,18 +84,13 @@ const BookingSection = ({ images }) => {
             textAlign: "center",
           }}
         >
-          <Typography
-            variant="h2"
-            sx={{
-              fontWeight: "bold",
-              fontFamily: "serif",
-              color: theme.palette.common.white,
-              textShadow: "2px 2px 8px rgba(0,0,0,0.7)",
-              fontSize: { xs: "3rem", md: "3.8rem" },
-            }}
-          >
-            Luxury Living In The Heart Of Shogran
-          </Typography>
+         <Typography
+  variant="h2"
+  sx={{ color: theme.palette.common.white }}
+>
+  Luxury Living In The Heart Of Shogran
+</Typography>
+
         </Box>
 
         {/* Book Now Button */}

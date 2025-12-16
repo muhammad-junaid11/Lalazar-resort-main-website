@@ -10,9 +10,16 @@ import DateTimePickerInput from "../../components/Form/DateTimePickerInput";
 import SelectInput from "../../components/Form/SelectInput";
 import TextFieldInput from "../../components/Form/TextFieldInput";
 
-const FirstStep = ({ onChange, defaultValues = {} }) => {
+const FirstStep = ({ onChange, defaultValues = {}, errors = [] }) => {
   const theme = useTheme();
   const [cityOptions, setCityOptions] = useState([]);
+const getFieldSx = (fieldName) => ({
+  ...inputSx,
+  "& .MuiOutlinedInput-root": {
+    ...inputSx["& .MuiOutlinedInput-root"],
+    borderColor: errors.includes(fieldName) ? "red" : inputSx["& .MuiOutlinedInput-root"].borderColor,
+  },
+});
 
   const methods = useForm({
     defaultValues: {
@@ -30,7 +37,6 @@ const FirstStep = ({ onChange, defaultValues = {} }) => {
   const checkInDate = methods.watch("checkInDate");
   const checkOutDate = methods.watch("checkOutDate");
 
-  // Fetch cities from Firebase
   useEffect(() => {
     const fetchCities = async () => {
       try {
@@ -49,7 +55,6 @@ const FirstStep = ({ onChange, defaultValues = {} }) => {
     fetchCities();
   }, []);
 
-  // Update parent formData whenever any field changes
   useEffect(() => {
     const subscription = methods.watch((value) => {
       onChange && onChange(value);
@@ -57,12 +62,12 @@ const FirstStep = ({ onChange, defaultValues = {} }) => {
     return () => subscription.unsubscribe();
   }, [methods, onChange]);
 
-  // Auto-adjust checkout if it's before or equal to check-in (considering time)
+
   useEffect(() => {
     if (checkInDate && checkOutDate && checkOutDate <= checkInDate) {
       methods.setValue(
         "checkOutDate",
-        new Date(checkInDate.getTime() + 60 * 60 * 1000) // 1 hour after check-in
+        new Date(checkInDate.getTime() + 60 * 60 * 1000) 
       );
     }
   }, [checkInDate, checkOutDate, methods]);
@@ -86,7 +91,7 @@ const FirstStep = ({ onChange, defaultValues = {} }) => {
   mt: 2,
   "& .MuiOutlinedInput-root": {
     borderRadius: "10px",
-    backgroundColor: "rgba(255,255,255,0.08)", // background for whole input
+    backgroundColor: "rgba(255,255,255,0.08)", 
     "& fieldset": {
       borderColor: "rgba(0,0,0,0.2)",
     },
@@ -95,11 +100,10 @@ const FirstStep = ({ onChange, defaultValues = {} }) => {
     },
     "&.Mui-focused fieldset": {
       borderColor: theme.palette.secondary.main,
-      // remove boxShadow or add inset if needed
     },
     "& .MuiInputBase-input": {
       color: "#000",
-      padding: "9px", // adjust to prevent overlap with label notch
+      padding: "9px", 
     },
     "& .MuiSelect-select": { color: "#000" },
   },
@@ -124,7 +128,7 @@ const FirstStep = ({ onChange, defaultValues = {} }) => {
               label="Check-in Date & Time"
               rules={{ required: "Check-in date and time are required" }}
               minDateTime={new Date()} // Prevent past dates/times
-              sx={inputSx}
+              sx={getFieldSx("checkInDate")}
               control={methods.control}
             />
 
@@ -137,8 +141,8 @@ const FirstStep = ({ onChange, defaultValues = {} }) => {
                   ? new Date(checkInDate.getTime() + 60 * 60 * 1000) // At least 1 hour after
                   : new Date()
               }
-              disabled={!checkInDate}
-              sx={inputSx}
+             
+              sx={getFieldSx("checkOutDate")}
               control={methods.control}
             />
 
@@ -152,7 +156,7 @@ const FirstStep = ({ onChange, defaultValues = {} }) => {
                 min: { value: 1, message: "At least 1 guest" },
                 max: { value: 8, message: "Maximum 8 guests" },
               }}
-              sx={inputSx}
+              sx={getFieldSx("numGuests")}
             />
 
             <TextFieldInput
@@ -165,7 +169,7 @@ const FirstStep = ({ onChange, defaultValues = {} }) => {
                 min: { value: 1, message: "At least 1 room" },
                 max: { value: 8, message: "Maximum 8 rooms" },
               }}
-              sx={inputSx}
+              sx={getFieldSx("numRooms")}
             />
 
             <SelectInput
@@ -173,21 +177,21 @@ const FirstStep = ({ onChange, defaultValues = {} }) => {
               label="Choose city"
               options={cityOptions}
               rules={{ required: "City is required" }}
-              sx={inputSx}
+              sx={getFieldSx("city")}
             />
           </Box>
         </Grid>
 
         <Grid size={{ xs: 12, md: 7 }}>
-          <Box
-            sx={{
-              display: "flex",
-              justifyContent: "center",
-              p: 0,
-              transform: "scale(1.2)",
-              pointerEvents: "none",
-            }}
-          >
+           <Box
+    sx={{
+      display: "flex",
+      justifyContent: {  xs: "center" }, 
+      mt: { xs: 2, md: 0 }, 
+      transform: { xs: "scale(0.9)", md: "scale(1.2)" }, 
+      pointerEvents: "none",
+    }}
+  >
             <DateRange
               ranges={dateRangeSelection}
               editableDateInputs={false}

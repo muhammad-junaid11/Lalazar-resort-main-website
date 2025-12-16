@@ -47,14 +47,13 @@ const ContactCards = () => {
                     bgcolor: 'white',
                     p: { xs: 4, md: 6 },
                     textAlign: 'center',
-                    // Styles adjusted to match the floating, subtle look from the image
                     border: '1px solid rgba(0, 0, 0, 0.05)',
                     borderRadius: theme.shape.borderRadius,
-                    boxShadow: '0 0 40px rgba(0, 0, 0, 0.05)', // Increased shadow
+                    boxShadow: '0 0 40px rgba(0, 0, 0, 0.05)', 
                     height: '100%',
                     transition: '0.3s',
                     '&:hover': {
-                        boxShadow: `0 0 50px ${secondary}30`, // Subtle hover effect
+                        boxShadow: `0 0 50px ${secondary}30`, 
                         transform: 'translateY(-5px)',
                     }
                   }}
@@ -76,12 +75,9 @@ const ContactCards = () => {
                     variant="h5"
                     component="h3"
                     sx={{
-                      // Increased font weight for prominence
-                      fontWeight: 600, 
                       color: 'text.primary',
                       mb: 2,
-                      // For that high-end look, often use a serif font for titles
-                      fontFamily: 'Georgia, serif', 
+                      fontWeight:"bold"
                     }}
                   >
                     {item.title}
@@ -94,11 +90,6 @@ const ContactCards = () => {
                         key={index}
                         variant="body1"
                         color="text.secondary"
-                        sx={{
-                          fontSize: '1rem',
-                          lineHeight: 1.6,
-                          color: theme.palette.text.secondary,
-                        }}
                       >
                         {line}
                       </Typography>

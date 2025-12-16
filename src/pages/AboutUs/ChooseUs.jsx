@@ -1,11 +1,9 @@
-// src/components/About/WhyChooseUs.jsx
-
 import React, { useState } from 'react';
-import { Box, Typography, Container, Grid,Divider } from '@mui/material';
+import { Box, Typography, Container, Grid, Divider } from '@mui/material';
 import ArrowForwardIcon from '@mui/icons-material/ArrowForward';
-// Assuming you have renamed the image path to use the correct one for the component
 import chooseUsImage from '../../assets/img1.webp'; 
 import { useTheme } from '@mui/material/styles';
+import { useNavigate } from 'react-router-dom';
 
 const reasons = [
   { id: 1, text: 'Luxurious Room' },
@@ -17,35 +15,26 @@ const reasons = [
 const WhyChooseUs = () => {
   const theme = useTheme();
   const [hoveredItemId, setHoveredItemId] = useState(null);
+  const navigate = useNavigate();
+
+  const reasonRoutes = {
+    "Luxurious Room": "/rooms/luxury-room",
+    "Beautiful Exterior": "/activities",
+    "Delicious Cuisine": "/services",
+    "Play Area For Kids": "/services",
+  };
 
   return (
     <Box sx={{ py: { xs: 8, md: 12 }, bgcolor: 'white' }}>
       <Container maxWidth="lg">
         <Grid container spacing={6} alignItems="center">
-          
-          {/* Left Section: Reasons to Choose Us (WIDER - Takes 7/12 columns on desktop) */}
-          <Grid size={{ xs: 12, md: 7 }} > 
+          {/* Left Section: Reasons */}
+          <Grid size={{ xs: 12, md: 7 }}> 
             <Box>
-              <Typography 
-                variant="overline" 
-                sx={{ 
-                  color: theme.palette.secondary.main, 
-                  letterSpacing: 2, 
-                  fontWeight: 500 
-                }}
-              >
+              <Typography variant="overline" sx={{ color: theme.palette.secondary.main, letterSpacing: 2 }}>
                 Why Choose
               </Typography>
-              <Typography
-                variant="h3"
-               sx={{
-            fontWeight: 700,
-            mb: 2,
-            fontFamily: '"Georgia",serif',
-            color: theme.palette.secondary.main,
-            fontSize: { xs: '2.5rem',sm:'3rem', md: '3.5rem' },
-          }}
-              >
+              <Typography variant="h3" sx={{ mb: 2, color: theme.palette.secondary.main }}>
                 Why Choose Us
               </Typography>
 
@@ -55,6 +44,18 @@ const WhyChooseUs = () => {
                     key={reason.id}
                     onMouseEnter={() => setHoveredItemId(reason.id)}
                     onMouseLeave={() => setHoveredItemId(null)}
+                    onClick={() => {
+                      if (reason.text === "Beautiful Exterior") {
+                        navigate(reasonRoutes[reason.text], { state: { scrollTo: "trekking-section" } });
+                      } else if (reason.text === "Delicious Cuisine") {
+                        navigate(reasonRoutes[reason.text], { state: { scrollTo: "cuisine-section" } });
+                      } else if (reason.text === "Play Area For Kids") {
+                        navigate(reasonRoutes[reason.text], { state: { scrollTo: "play-area-section" } });
+                      } else {
+                        navigate(reasonRoutes[reason.text]);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                      }
+                    }}
                     sx={{
                       p: 3,
                       border: `1px solid ${theme.palette.grey[300]}`,
@@ -70,48 +71,27 @@ const WhyChooseUs = () => {
                       color: hoveredItemId === reason.id 
                         ? theme.palette.primary.contrastText 
                         : theme.palette.text.primary, 
-                      '&:hover': {
-                        // Maintain the border color change on hover, even if background state is managed by useState
-                        borderColor: theme.palette.secondary.main,
-                      },
+                      '&:hover': { borderColor: theme.palette.secondary.main },
                     }}
                   >
-                    <Typography 
-                      variant="h6" 
-                      sx={{ 
-                        fontWeight: 600,
-                        color: hoveredItemId === reason.id 
-                            ? 'inherit' 
-                            : theme.palette.text.primary,
-                        transition: 'color 0.3s ease',
-                      }}
-                    >
+                    <Typography variant="h6" sx={{ color: hoveredItemId === reason.id ? 'inherit' : theme.palette.text.primary, transition: 'color 0.3s ease', fontWeight: "bold" }}>
                       {reason.text}
                     </Typography>
-                    <ArrowForwardIcon 
-                      sx={{ 
-                        fontSize: 24,
-                        color: hoveredItemId === reason.id 
-                            ? theme.palette.primary.contrastText 
-                            : theme.palette.text.secondary, 
-                        transition: 'color 0.3s ease',
-                      }} 
-                    />
+                    <ArrowForwardIcon sx={{ fontSize: 24, color: hoveredItemId === reason.id ? theme.palette.primary.contrastText : theme.palette.text.secondary, transition: 'color 0.3s ease' }} />
                   </Box>
                 ))}
               </Box>
             </Box>
           </Grid>
 
-          {/* Right Section: Image (NARROWER - Takes 5/12 columns on desktop) */}
-          <Grid size={{ xs: 12, md: 5 }} > 
+          {/* Right Section: Image */}
+          <Grid size={{ xs: 12, md: 5 }}> 
             <Box
               component="img"
               src={chooseUsImage}
               alt="Why Choose Us"
               sx={{
                 width: '100%',
-                // Adjust height to maintain a good aspect ratio against the text list
                 height: { xs: 300, md: 480 }, 
                 objectFit: 'cover',
                 borderRadius: 2,

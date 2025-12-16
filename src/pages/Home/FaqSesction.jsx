@@ -62,8 +62,8 @@ const FaqSection = () => {
         maxWidth="lg"
         sx={{
           py: 0,
-          mt: { xs: 5, sm: 8, md: 15 }, 
-         mb: { xs: 5,md: 15 },// different margin-top per breakpoint
+          mt: { xs: 5, sm: 8, md: 15 },
+          mb: { xs: 5, md: 15 }, // different margin-top per breakpoint
         }}
       >
         <Grid container spacing={4}>
@@ -91,13 +91,8 @@ const FaqSection = () => {
                   }}
                 />
                 <Typography
-                  variant="h3"
-                  sx={{
-                    fontWeight: 500,
-                    fontFamily: "serif",
-                    color: theme.palette.secondary.main,
-                    fontSize: { xs: "2rem", md: "3rem" },
-                  }}
+                  variant="h2"
+                  sx={{ color: theme.palette.secondary.main, mb: 2 }}
                 >
                   Get Answers
                 </Typography>
@@ -143,7 +138,7 @@ const FaqSection = () => {
                         },
                       }}
                     >
-                      <Typography variant="body1" sx={{ fontWeight: 600 }}>
+                      <Typography variant="subtitle1">
                         {faq.question}
                       </Typography>
                     </AccordionSummary>
@@ -156,7 +151,7 @@ const FaqSection = () => {
                         p: 2,
                       }}
                     >
-                      <Typography variant="body2" color="text.secondary">
+                      <Typography variant="body2" color="text.secondary" sx={{ fontFamily: 'serif' }} >
                         {faq.answer}
                       </Typography>
                     </AccordionDetails>
@@ -187,8 +182,6 @@ const FaqSection = () => {
                 }}
               />
             </Box>
-
-            
           </Grid>
         </Grid>
       </Container>
