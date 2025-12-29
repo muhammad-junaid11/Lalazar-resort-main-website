@@ -12,19 +12,17 @@ import {
 } from "@mui/material";
 
 import { useNavigate, useLocation } from "react-router-dom";
-import {
-  collection,
-  addDoc,
-  serverTimestamp,
-  getDoc,
-  doc,
-} from "firebase/firestore";
+import { CircularProgress } from "@mui/material";
 import { auth, db } from "../../services/Firebase/Firebase";
 
 import FirstStep from "./FirstStep";
 import SecondStep from "./SecondStep";
 import ThirdStep from "./ThirdStep";
 import toast, { Toaster } from "react-hot-toast";
+import { getUserEmail } from "../../services/dbServices/UserService";
+import { createBooking } from "../../services/dbServices/BookingService";
+import { createPayment } from "../../services/dbServices/PaymentService";
+
 
 const verticalSteps = [
   {
@@ -154,6 +152,7 @@ const BookingLayout = () => {
   const [receipt, setReceipt] = useState(null);
   const [showConfirmation, setShowConfirmation] = useState(false);
   const [userEmail, setUserEmail] = useState("");
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   const validateStep1 = () => {
     const required = ["checkInDate", "checkOutDate", "numGuests", "numRooms", "city"];
@@ -184,7 +183,7 @@ const BookingLayout = () => {
     }
 
     if (selectedCount < numRoomsRequired) {
-      toast.error(`Please select atleast number of rooms you choosen like ${numRoomsRequired}`);
+      toast.error(`Please select at least ${numRoomsRequired} room(s) as you specified`);
       return false;
     }
 
@@ -228,57 +227,69 @@ const BookingLayout = () => {
     }));
   };
 
-  const handleSubmit = async () => {
-    // <-- Added validation for payment selection
-    if (!validateStep3()) return;
+const handleSubmit = async () => {
+  if (!validateStep3()) return;
 
-    try {
-      const user = auth.currentUser;
-      if (!user) {
-        toast.error("You must be signed in to make a booking!");
-        return;
-      }
+  try {
+    setIsSubmitting(true); // ✅ start loading
 
-      const userDoc = await getDoc(doc(db, "users", user.uid));
-      if (userDoc.exists())
-        setUserEmail(userDoc.data().userEmail || userDoc.data().email || "");
-
-      const { checkInDate, checkOutDate, numGuests } = formData.firstStep;
-      const roomIds = formData.secondStep.selectedRooms.map((r) => r.id);
-      const paymentMethodMap = {
-        1: "EasyPaisa",
-        2: "JazzCash",
-        3: "MasterCard",
-      };
-      const paymentMethodName = paymentMethodMap[formData.thirdStep.selectedPayment];
-
-      const bookingRef = await addDoc(collection(db, "bookings"), {
-        checkInDate,
-        checkOutDate,
-        paymentMethod: paymentMethodName,
-        persons: Number(numGuests),
-        roomId: roomIds,
-        status: "pending",
-        userId: user.uid,
-      });
-
-      await addDoc(collection(db, "payment"), {
-        bookingId: bookingRef.id,
-        label: "Advance 1",
-        paidAmount: 0,
-        paymentDate: serverTimestamp(),
-        paymentType: paymentMethodName,
-        receiptPath: receipt || "",
-        status: "Pending",
-      });
-
-      setShowConfirmation(true);
-      toast.success("Booking submitted successfully!", { duration: 3000 });
-    } catch (err) {
-      console.error(err);
-      toast.error("Failed to submit booking. Please try again.");
+    const user = auth.currentUser;
+    if (!user) {
+      toast.error("You must be signed in to make a booking!");
+      setIsSubmitting(false);
+      return;
     }
-  };
+
+    const userEmail = await getUserEmail(user.uid);
+    setUserEmail(userEmail);
+
+    const { checkInDate, checkOutDate, numGuests } = formData.firstStep;
+    const roomIds = formData.secondStep.selectedRooms.map((r) => r.id);
+
+    const paymentMethodMap = { 1: "EasyPaisa", 2: "JazzCash", 3: "MasterCard" };
+    const paymentMethodName =
+      paymentMethodMap[formData.thirdStep.selectedPayment];
+
+    const roomsWithPrice = formData.secondStep.selectedRooms;
+    const diffTime =
+      new Date(checkOutDate).getTime() - new Date(checkInDate).getTime();
+
+    let stayNights = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    if (stayNights < 1) stayNights = 1;
+
+    const totalAmount = roomsWithPrice.reduce((sum, room) => {
+      const roomPrice = room.price || 0;
+      return sum + roomPrice * stayNights;
+    }, 0);
+
+    const advance = Math.round(totalAmount * 0.4);
+
+    const bookingId = await createBooking(user.uid, {
+      checkInDate,
+      checkOutDate,
+      persons: Number(numGuests),
+      roomId: roomIds,
+      paymentMethod: paymentMethodName,
+    });
+
+    await createPayment(
+      bookingId,
+      paymentMethodName,
+      receipt,
+      totalAmount,
+      advance
+    );
+
+    setShowConfirmation(true);
+    toast.success("Booking submitted successfully!");
+  } catch (err) {
+    console.error(err);
+    toast.error("Failed to submit booking. Please try again.");
+  } finally {
+    setIsSubmitting(false); // ✅ stop loading
+  }
+};
+
 
   const renderStep = () => {
     switch (step) {
@@ -351,7 +362,19 @@ const BookingLayout = () => {
               {step < totalSteps ? (
                 <Button variant="contained" onClick={handleNext} sx={navButtonSx}>Next</Button>
               ) : (
-                <Button variant="contained" onClick={handleSubmit} sx={navButtonSx}>Submit</Button>
+                <Button
+  variant="contained"
+  onClick={handleSubmit}
+  sx={navButtonSx}
+  disabled={isSubmitting}
+>
+  {isSubmitting ? (
+    <CircularProgress size={20} sx={{ color: "white" }} />
+  ) : (
+    "Submit"
+  )}
+</Button>
+
               )}
             </Box>
             <Divider sx={{ mb: 3, borderColor: "rgba(0,0,0,0.2)" }} />

@@ -2,13 +2,12 @@ import React, { useMemo, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import { Box, Typography, Grid, useTheme } from "@mui/material";
 import { DateRange } from "react-date-range";
-import { collection, getDocs } from "firebase/firestore";
-import { db } from "../../services/Firebase/Firebase"; 
 
 import RHFformProvider from "../../components/Form/RHFformProvider";
 import DateTimePickerInput from "../../components/Form/DateTimePickerInput";
 import SelectInput from "../../components/Form/SelectInput";
 import TextFieldInput from "../../components/Form/TextFieldInput";
+import { fetchCities } from "../../services/dbServices/CityService";
 
 const FirstStep = ({ onChange, defaultValues = {}, errors = [] }) => {
   const theme = useTheme();
@@ -37,23 +36,15 @@ const getFieldSx = (fieldName) => ({
   const checkInDate = methods.watch("checkInDate");
   const checkOutDate = methods.watch("checkOutDate");
 
-  useEffect(() => {
-    const fetchCities = async () => {
-      try {
-        const snapshot = await getDocs(collection(db, "city"));
-        const cities = snapshot.docs.map((doc) => ({
-          label: doc.data().cityName,
-          value: doc.id,
-        }));
-        setCityOptions(cities);
-      } catch (err) {
-        console.error("Error fetching cities:", err);
-        setCityOptions([]);
-      }
-    };
 
-    fetchCities();
-  }, []);
+useEffect(() => {
+  const loadCities = async () => {
+    const cities = await fetchCities(); // service handles Firestore
+    setCityOptions(cities);
+  };
+  loadCities();
+}, []);
+
 
   useEffect(() => {
     const subscription = methods.watch((value) => {

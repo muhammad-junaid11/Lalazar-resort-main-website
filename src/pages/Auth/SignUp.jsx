@@ -20,6 +20,8 @@ import TextFieldInput from "../../components/Form/TextFieldInput";
 import SelectInput from "../../components/Form/SelectInput";
 import DatePickerInput from "../../components/Form/DatePickerInput";
 import bgImage from "../../assets/img1.webp";
+import Cookies from "js-cookie";
+
 
 const SignUp = () => {
   const theme = useTheme();

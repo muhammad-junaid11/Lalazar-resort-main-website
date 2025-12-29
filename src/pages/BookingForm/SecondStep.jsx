@@ -10,24 +10,23 @@ import {
   Skeleton,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
-import { collection, getDocs, doc, getDoc, query, where } from "firebase/firestore";
-import { db } from "../../services/Firebase/Firebase";
 import { useForm } from "react-hook-form";
 import RHFformProvider from "../../components/Form/RHFformProvider";
 import TextFieldInput from "../../components/Form/TextFieldInput";
 import SelectInput from "../../components/Form/SelectInput";
 import toast from "react-hot-toast";
+import { fetchCategories } from "../../services/dbServices/CategoryService";
+import { fetchAvailableRooms, fetchRoomsByIds } from "../../services/dbServices/RoomService";
 
 // ------------------------------------------------------
-// Fetch rooms hook (Corrected Loading Logic)
+// Hook to fetch rooms from service (already excludes booked rooms)
 // ------------------------------------------------------
 const useFetchRooms = (selectedCategoryId, selectedCityId, checkInDate, checkOutDate) => {
   const [rooms, setRooms] = useState([]);
-  const [loading, setLoading] = useState(true); // Always start true
+  const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
   useEffect(() => {
-    // Reset loading state whenever inputs change
     setLoading(true);
 
     if (!selectedCategoryId || !selectedCityId || !checkInDate || !checkOutDate) {
@@ -36,62 +35,32 @@ const useFetchRooms = (selectedCategoryId, selectedCityId, checkInDate, checkOut
       return;
     }
 
-    const fetchRooms = async () => {
-      setError(null);
+    const loadRooms = async () => {
       try {
-        const catRef = doc(db, "roomCategory", selectedCategoryId);
-        const catSnap = await getDoc(catRef);
-        const foundCategoryName = catSnap.exists() ? catSnap.data().categoryName : "Room";
-
-        const hotelSnapshot = await getDocs(collection(db, "hotel"));
-        const hotelMap = {};
-        hotelSnapshot.docs.forEach((doc) => {
-          const data = doc.data();
-          if (data.cityId === selectedCityId) hotelMap[doc.id] = data.hotelName;
-        });
-
-        const roomsSnapshot = await getDocs(collection(db, "rooms"));
-        let fetchedRoomsData = roomsSnapshot.docs
-          .filter((doc) => doc.data().categoryId === selectedCategoryId && hotelMap[doc.data().hotelId])
-          .map((roomDoc) => {
-            const data = roomDoc.data();
-            return {
-              id: roomDoc.id,
-              title: data.roomName || foundCategoryName,
-              hotel: hotelMap[data.hotelId] || "Hotel",
-              price: data.price || 0,
-              image: data.image || "https://via.placeholder.com/300x220",
-            };
-          });
-
-        const bookingSnap = await getDocs(query(collection(db, "bookings"), where("status", "==", "Confirmed")));
-        const userStart = new Date(checkInDate);
-        const userEnd = new Date(checkOutDate);
-        const bookedRoomIds = new Set();
-
-        bookingSnap.docs.forEach((doc) => {
-          const data = doc.data();
-          const bStart = new Date(data.checkInDate.seconds * 1000);
-          const bEnd = new Date(data.checkOutDate.seconds * 1000);
-          if (userStart < bEnd && userEnd > bStart) {
-            if (Array.isArray(data.roomId)) data.roomId.forEach((r) => bookedRoomIds.add(r));
-            else bookedRoomIds.add(data.roomId);
-          }
-        });
-
-        setRooms(fetchedRoomsData.filter((room) => !bookedRoomIds.has(room.id)));
+        const availableRooms = await fetchAvailableRooms(
+          selectedCategoryId,
+          selectedCityId,
+          checkInDate,
+          checkOutDate
+        );
+        setRooms(availableRooms); // Already excludes booked rooms
       } catch (err) {
+        console.error("Error loading rooms:", err);
         setError("Error loading rooms.");
       } finally {
         setLoading(false);
       }
     };
-    fetchRooms();
+
+    loadRooms();
   }, [selectedCategoryId, selectedCityId, checkInDate, checkOutDate]);
 
   return { rooms, loading, error };
 };
 
+// ------------------------------------------------------
+// Component
+// ------------------------------------------------------
 const SecondStep = ({
   selectedRooms,
   setSelectedRooms,
@@ -104,58 +73,125 @@ const SecondStep = ({
 }) => {
   const theme = useTheme();
   const [roomOptions, setRoomOptions] = useState([]);
-  const { rooms: fetchedRooms, loading, error } = useFetchRooms(selectedCategoryId, selectedCityId, checkInDate, checkOutDate);
+  const [preselectedRoomsFetched, setPreselectedRoomsFetched] = useState(false);
+
+  const { rooms: fetchedRooms, loading, error } = useFetchRooms(
+    selectedCategoryId,
+    selectedCityId,
+    checkInDate,
+    checkOutDate
+  );
 
   const methods = useForm({
     defaultValues: { search: "", roomCategorySelect: selectedCategoryId || "" },
   });
 
-  const { watch, control, setValue } = methods;
+  const { watch, control } = methods;
   const filters = watch();
 
+  // Load categories
   useEffect(() => {
-    const fetchCats = async () => {
-      const snap = await getDocs(collection(db, "roomCategory"));
-      const cats = snap.docs.map((d) => ({ label: d.data().categoryName, value: d.id }));
-      setRoomOptions(cats);
-      if (!selectedCategoryId && cats.length > 0) setSelectedCategoryId(cats[0].value);
+    const loadCategories = async () => {
+      const cats = await fetchCategories();
+      const formattedCats = cats.map(c => ({ label: c.categoryName, value: c.id }));
+      setRoomOptions(formattedCats);
+      if (!selectedCategoryId && formattedCats.length > 0) {
+        setSelectedCategoryId(formattedCats[0].value);
+      }
     };
-    fetchCats();
+    loadCategories();
   }, []);
 
-  useEffect(() => { setSelectedCategoryId(filters.roomCategorySelect); }, [filters.roomCategorySelect]);
+  // Fetch preselected room data when component mounts (from URL params)
+  useEffect(() => {
+    const fetchPreselectedRoomData = async () => {
+      if (preselectedRoomsFetched) return;
 
+      if (selectedRooms.length > 0) {
+        const needsFetch = selectedRooms.some(r => !r.price || r.price === undefined);
+
+        if (needsFetch) {
+          try {
+            const roomIds = selectedRooms.map(r => r.id);
+            const fetchedData = await fetchRoomsByIds(roomIds);
+
+            if (fetchedData && fetchedData.length > 0) {
+              const allRooms = await import("../../services/dbServices/RoomService").then(m => m.fetchAllRooms());
+              const enrichedRooms = fetchedData.map(fetchedRoom => {
+                const fullRoom = allRooms.find(r => r.id === fetchedRoom.id);
+                return fullRoom || fetchedRoom;
+              });
+              setSelectedRooms(enrichedRooms);
+            }
+          } catch (err) {
+            console.error("Error fetching preselected rooms:", err);
+            toast.error("Failed to load preselected room details");
+          }
+        }
+      }
+
+      setPreselectedRoomsFetched(true);
+    };
+
+    fetchPreselectedRoomData();
+  }, [selectedRooms.length, preselectedRoomsFetched]);
+
+  useEffect(() => {
+    setSelectedCategoryId(filters.roomCategorySelect);
+  }, [filters.roomCategorySelect]);
+
+  // Filter rooms by search
   const filteredRooms = useMemo(() => {
     if (!filters.search) return fetchedRooms;
     const s = filters.search.toLowerCase();
-    return fetchedRooms.filter(r => r.title.toLowerCase().includes(s) || r.hotel.toLowerCase().includes(s));
+    return fetchedRooms.filter(
+      r => r.title?.toLowerCase().includes(s) || r.hotelName?.toLowerCase().includes(s)
+    );
   }, [filters.search, fetchedRooms]);
 
-  const toggleRoomSelection = (room) => {
-    const isSelected = selectedRooms.find((r) => r.id === room.id);
+  const toggleRoomSelection = room => {
+    const isSelected = selectedRooms.find(r => r.id === room.id);
     if (isSelected) {
-      setSelectedRooms(selectedRooms.filter((r) => r.id !== room.id));
+      setSelectedRooms(selectedRooms.filter(r => r.id !== room.id));
     } else {
       if (selectedRooms.length < maxRooms) {
-        setSelectedRooms([...selectedRooms, room]);
+        const roomWithAllData = {
+          id: room.id,
+          title: room.title,
+          hotelName: room.hotelName,
+          cityName: room.cityName,
+          price: room.price,
+          image: room.image,
+          categoryId: room.categoryId,
+          cityId: room.cityId,
+          categoryName: room.categoryName,
+          hotelId: room.hotelId,
+          amenities: room.amenities || []
+        };
+        setSelectedRooms([...selectedRooms, roomWithAllData]);
       } else {
-        toast.error(`Rooms has already been chosen.`);
+        toast.error(`You can only select ${maxRooms} room(s).`);
       }
     }
   };
 
-  // ------------------------------------------------------
-  // RENDER LOGIC (Corrected Priority)
-  // ------------------------------------------------------
   const renderContent = () => {
     if (loading) {
       return (
         <Grid container spacing={2}>
-          {[1, 2, 3].map((i) => (
-            <Grid size={{xs:12,md:4}} key={i}>
+          {[1, 2, 3].map(i => (
+            <Grid item xs={12} md={4} key={i}>
               <Card sx={{ display: "flex", height: 160, p: 1 }}>
                 <Skeleton variant="rectangular" width={150} height={140} sx={{ borderRadius: 1 }} />
-                <Box sx={{ flex: 1, pl: 2, display: "flex", flexDirection: "column", justifyContent: "space-between" }}>
+                <Box
+                  sx={{
+                    flex: 1,
+                    pl: 2,
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "space-between",
+                  }}
+                >
                   <Skeleton variant="text" width="80%" />
                   <Skeleton variant="text" width="60%" />
                   <Skeleton variant="text" width="40%" />
@@ -169,17 +205,15 @@ const SecondStep = ({
     }
 
     if (error) return <Typography color="error">{error}</Typography>;
-
     if (fetchedRooms.length === 0) return <Typography>No rooms available for these dates.</Typography>;
-
     if (filteredRooms.length === 0) return <Typography>No rooms match the filters.</Typography>;
 
     return (
       <Grid container spacing={2}>
-        {filteredRooms.map((room) => {
-          const isSelected = selectedRooms.some((r) => r.id === room.id);
+        {filteredRooms.map(room => {
+          const isSelected = selectedRooms.some(r => r.id === room.id);
           return (
-            <Grid size={{xs:12,md:4}} key={room.id}>
+            <Grid item xs={12} md={4} key={room.id}>
               <Card
                 sx={{
                   display: "flex",
@@ -188,22 +222,54 @@ const SecondStep = ({
                   position: "relative",
                   borderRadius: 1,
                   border: isSelected ? `2px solid ${theme.palette.secondary.main}` : "1px solid #ddd",
-                  transition: "all 0.3s ease",
+
                 }}
               >
-                <CardMedia component="img" image={room.image} sx={{ width: 150, borderRadius: 1, objectFit: "cover" }} />
-                <Box sx={{ flex: 1, pl: 2, display: "flex", flexDirection: "column", justifyContent: "space-between", zIndex: 2 }}>
+                <CardMedia
+                  component="img"
+                  image={room.image}
+                  sx={{ width: 150, borderRadius: 1, objectFit: "cover" }}
+                />
+                <Box
+                  sx={{
+                    flex: 1,
+                    pl: 2,
+                    display: "flex",
+                    flexDirection: "column",
+                    justifyContent: "space-between",
+                    zIndex: 2,
+                  }}
+                >
                   <Box>
-                    <Typography variant="subtitle1" sx={{ fontWeight: "bold", fontSize: "0.95rem" }}>{room.title}</Typography>
-                    <Typography sx={{ opacity: 0.7, fontSize: "0.8rem" }}>{room.hotel}</Typography>
-                    <Typography sx={{ color: theme.palette.secondary.main, fontWeight: 600, mt: 1 }}>PKR {room.price}</Typography>
+                    <Typography variant="subtitle1" sx={{ fontWeight: "bold", fontSize: "0.95rem" }}>
+                      {room.title}
+                    </Typography>
+                    <Typography sx={{ opacity: 0.7, fontSize: "0.8rem" }}>{room.hotelName}</Typography>
+                    <Typography
+                      sx={{ color: theme.palette.secondary.main, fontWeight: 600, mt: 1 }}
+                    >
+                      PKR {room.price}
+                    </Typography>
                   </Box>
-                  <Button variant="outlined" color="secondary" size="small" sx={{ width: "100px" }} onClick={() => toggleRoomSelection(room)}>
+                  <Button
+                    variant="outlined"
+                    color="secondary"
+                    size="small"
+                    sx={{ width: "100px" }}
+                    onClick={() => toggleRoomSelection(room)}
+                  >
                     {isSelected ? "Selected" : "Book"}
                   </Button>
                 </Box>
                 {isSelected && (
-                  <Box sx={{ position: "absolute", inset: 0, bgcolor: `${theme.palette.secondary.main}12`, zIndex: 1 }} />
+                  <Box
+                    sx={{
+                      position: "absolute",
+                      inset: 0,
+                      bgcolor: `${theme.palette.secondary.main}12`,
+                      zIndex: 1,
+                    }}
+                  />
                 )}
               </Card>
             </Grid>
@@ -217,15 +283,39 @@ const SecondStep = ({
     <RHFformProvider methods={methods}>
       <Box sx={{ maxWidth: 1320, mx: "auto" }}>
         <Box sx={{ display: "flex", gap: 2, mb: 4, flexWrap: "wrap" }}>
-          <TextFieldInput name="search" control={control} placeholder="Search by hotel" sx={{ width: 200 }} 
-            InputProps={{ startAdornment: <SearchIcon sx={{ color: filters.search ? theme.palette.secondary.main : "grey.500", mr: 1 }} /> }} 
+          <TextFieldInput
+            name="search"
+            control={control}
+            placeholder="Search by hotel"
+            sx={{ width: 200 }}
+            InputProps={{
+              startAdornment: (
+                <SearchIcon
+                  sx={{ color: filters.search ? theme.palette.secondary.main : "grey.500", mr: 1 }}
+                />
+              ),
+            }}
           />
           <Box sx={{ width: 220 }}>
-            <SelectInput name="roomCategorySelect" label="Room Category" control={control} options={roomOptions} />
+            <SelectInput
+              name="roomCategorySelect"
+              label="Room Category"
+              control={control}
+              options={roomOptions}
+            />
           </Box>
         </Box>
 
-        <Typography variant="h5" sx={{ fontWeight: "bold", mb: 2, borderBottom: `4px solid ${theme.palette.secondary.main}`, pb: 1, width: "fit-content" }}>
+        <Typography
+          variant="h5"
+          sx={{
+            fontWeight: "bold",
+            mb: 2,
+            borderBottom: `4px solid ${theme.palette.secondary.main}`,
+            pb: 1,
+            width: "fit-content",
+          }}
+        >
           Available Rooms
         </Typography>
 
