@@ -14,10 +14,10 @@ import RestaurantIcon from "@mui/icons-material/Restaurant";
 import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
 import MonetizationOnIcon from "@mui/icons-material/MonetizationOn";
 
-import familyImg from "../../assets/Familyr.webp";
-import luxuryImg from "../../assets/Luxuryr.webp";
-import deluxeImg from "../../assets/Deluxer.webp";
-import executiveImg from "../../assets/Executiver.webp";
+import familyImg from "../../assets/FamilyR.webp";
+import luxuryImg from "../../assets/LuxuryR.webp";
+import deluxeImg from "../../assets/DeluxeR.webp";
+import executiveImg from "../../assets/ExecutiveR.webp";
 
 const amenityIcons = { wifi: { icon: WifiIcon, label: "WiFi" }, pool: { icon: PoolIcon, label: "Pool" }, parking: { icon: LocalParkingIcon, label: "Parking" }, breakfast: { icon: RestaurantIcon, label: "Breakfast" }, gym: { icon: FitnessCenterIcon, label: "Gym" } };
 const categoryImages = { "family-room": familyImg, "luxury-room": luxuryImg, "deluxe-room": deluxeImg, "executive-room": executiveImg };
