@@ -2,7 +2,7 @@ import React from 'react';
 import { Box, Typography, Card, CardContent, Button, List, ListItem, ListItemIcon, ListItemText, Grid, useTheme } from '@mui/material';
 import CheckIcon from '@mui/icons-material/Check';
 import HomeIcon from '@mui/icons-material/Home';
-import hotelBg from '../../assets/hotelBg.webp'; 
+import hotelBg from '../../assets/hotelbg.webp'; 
 
 const HotelPlans = () => {
   const theme = useTheme();
