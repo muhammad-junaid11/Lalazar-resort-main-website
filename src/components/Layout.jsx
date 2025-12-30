@@ -53,7 +53,6 @@ const Layout = ({ children, navColor = "transparent" }) => {
     setUserMenuAnchorEl(null);
     navigate("/");
   };
-  // Auth state
 useEffect(() => {
   const unsubscribe = listenAuthUser(
     setUserName,
@@ -91,7 +90,7 @@ useEffect(() => {
     }
   };
 
-  // Fetch room categories from service
+
   useEffect(() => {
     const getCategories = async () => {
       try {
@@ -310,7 +309,6 @@ useEffect(() => {
             </Box>
           </Box>
 
-          {/* Desktop User Menu */}
           <Box sx={{ display: { xs: "none", md: "flex" }, gap: 2 }}>
             {userName ? (
               <>
@@ -503,12 +501,12 @@ useEffect(() => {
         </Toolbar>
       </AppBar>
 
-      {/* Page content */}
+     
       <Box sx={{ flex: 1 }} key={location.pathname}>
         {children}
       </Box>
 
-      {/* Footer */}
+     
       <Box sx={{ bgcolor: "white", pt: 10 }}>
         <Container maxWidth="lg">
           <Grid container spacing={6} justifyContent="center">

@@ -1,5 +1,3 @@
-// src/components/About/CoreFeatureAbout.jsx
-
 import React from 'react';
 import { Box, Typography, Container, Grid } from '@mui/material';
 import RestaurantIcon from '@mui/icons-material/Restaurant';
@@ -11,7 +9,6 @@ import SecurityIcon from '@mui/icons-material/Security';
 import WifiIcon from '@mui/icons-material/Wifi';
 import { useTheme } from '@mui/material/styles';
 
-// Define the feature data structure
 const features = [
   { 
     title: 'Restaurant', 
@@ -53,14 +50,14 @@ const features = [
 const CoreFeatureAbout = () => {
   const theme = useTheme();
 
-  // FIX: Destructure 'icon' and alias it to 'Icon' (capitalized) so it can be rendered as a React component.
+  
   const FeatureCard = ({ title, description, icon: Icon }) => (
     <Box
       sx={{
         p: 3,
         border: `1px solid ${theme.palette.grey[300]}`,
         borderRadius: 2,
-        minHeight: '200px', // Ensure consistent height
+        minHeight: '200px', 
         textAlign: 'left',
         transition: 'box-shadow 0.3s',
         '&:hover': {

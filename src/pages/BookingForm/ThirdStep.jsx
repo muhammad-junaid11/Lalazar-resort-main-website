@@ -18,7 +18,7 @@ const ThirdStep = ({ formData, selectedPayment, setSelectedPayment }) => {
   const [roomsWithPrice, setRoomsWithPrice] = useState([]);
   const [roomsLoading, setRoomsLoading] = useState(true);
 
-  // Fetch user details
+  
   useEffect(() => {
     const loadUser = async () => {
       setUserLoading(true);
@@ -36,7 +36,7 @@ const ThirdStep = ({ formData, selectedPayment, setSelectedPayment }) => {
     loadUser();
   }, []);
 
-  // Fetch complete room details
+  
   useEffect(() => {
     const fetchRoomDetails = async () => {
       try {
@@ -51,7 +51,7 @@ const ThirdStep = ({ formData, selectedPayment, setSelectedPayment }) => {
 
         console.log("Selected rooms in ThirdStep:", selectedRooms);
 
-        // Check if ALL rooms have complete price data
+        
         const hasAllPrices = selectedRooms.every(r => 
           r.price !== undefined && 
           r.price !== null && 
@@ -60,16 +60,16 @@ const ThirdStep = ({ formData, selectedPayment, setSelectedPayment }) => {
         );
         
         if (hasAllPrices) {
-          // All rooms already have complete data
+          
           console.log("All rooms have price data");
           setRoomsWithPrice(selectedRooms);
           setRoomsLoading(false);
         } else {
-          // Need to fetch complete room data
+          
           console.log("Fetching complete room data...");
           const allRooms = await fetchAllRooms();
           
-          // Match selected rooms with complete data from allRooms
+          
           const enrichedRooms = selectedRooms.map(selectedRoom => {
             const fullRoom = allRooms.find(r => r.id === selectedRoom.id);
             if (fullRoom) {
@@ -112,16 +112,16 @@ const ThirdStep = ({ formData, selectedPayment, setSelectedPayment }) => {
       return { totalAmount: 0, advance: 0, stayNights: 0 };
     }
 
-    // Calculate nights stayed
+    
     const diffTime = checkOut.getTime() - checkIn.getTime();
     let nights = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
     
-    // Ensure at least 1 night is charged
+  
     if (nights < 1) nights = 1;
 
     console.log(`Stay duration: ${nights} night(s)`);
 
-    // Calculate total for all rooms
+    
     const total = selectedRooms.reduce((sum, room) => {
       const roomPrice = room.price || 0;
       console.log(`Room ${room.title || room.id}: PKR ${roomPrice} × ${nights} nights`);
@@ -175,7 +175,7 @@ const ThirdStep = ({ formData, selectedPayment, setSelectedPayment }) => {
           Please choose the method of payment:
         </Typography>
 
-        {/* Payment methods in row */}
+       
         <Grid container spacing={2} sx={{ mb: 3 }}>
           {paymentAccounts.map((method) => (
             <Grid size={{xs:12,sm:6,md:4}} key={method.id}>

@@ -51,7 +51,7 @@ const HotelPlans = () => {
         backgroundRepeat: 'no-repeat',
       }}
     >
-      {/* Stronger overlay */}
+
       <Box
         sx={{
           position: 'absolute',
@@ -65,7 +65,6 @@ const HotelPlans = () => {
       />
 
       <Grid container spacing={4} sx={{ zIndex: 1 }}>
-        {/* Left Side: 2 Cards */}
         <Grid size={{ xs: 12, sm: 6}}>
           <Grid container spacing={3}>
             {[deluxePlan, luxuryPlan].map((plan, index) => (
@@ -136,7 +135,6 @@ const HotelPlans = () => {
 </Typography>
 
 
-            {/* Flexible + Anytime horizontal boxes with equal width */}
             <Grid container spacing={3} sx={{ justifyContent: 'center' }}>
               {['Flexible Price', 'Anytime Discharge'].map((title, idx) => (
                 <Grid size={{ xs: 12, sm: 6 }} key={idx}>

@@ -231,7 +231,7 @@ const handleSubmit = async () => {
   if (!validateStep3()) return;
 
   try {
-    setIsSubmitting(true); // ✅ start loading
+    setIsSubmitting(true);
 
     const user = auth.currentUser;
     if (!user) {
@@ -286,7 +286,7 @@ const handleSubmit = async () => {
     console.error(err);
     toast.error("Failed to submit booking. Please try again.");
   } finally {
-    setIsSubmitting(false); // ✅ stop loading
+    setIsSubmitting(false); 
   }
 };
 

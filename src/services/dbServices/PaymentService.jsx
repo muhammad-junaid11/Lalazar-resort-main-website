@@ -1,13 +1,6 @@
-// services/PaymentService.js
 import { collection, addDoc, serverTimestamp } from "firebase/firestore";
 import { db } from "../Firebase/Firebase";
 
-/**
- * Create a payment entry for a booking
- * @param {string} bookingId
- * @param {string} paymentType
- * @param {string} receipt
- */
 export const createPayment = async (bookingId, paymentType, receipt = "", totalAmount = 0, advance = 0) => {
   try {
     await addDoc(collection(db, "payment"), {

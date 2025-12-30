@@ -1,7 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { Box, Typography, Container, Paper, useTheme } from "@mui/material";
 
-// Sample Feedback Data
 const feedbackData = [
   {
     id: 1,
@@ -27,7 +26,6 @@ const UserFeedback = () => {
   const theme = useTheme();
   const [currentFeedbackIndex, setCurrentFeedbackIndex] = useState(0);
 
-  // Auto-advance feedback every 5 seconds
   useEffect(() => {
     const interval = setInterval(() => {
       setCurrentFeedbackIndex(
@@ -52,19 +50,19 @@ const UserFeedback = () => {
         >
           User Feedback
         </Typography>
-       <Typography
-  variant="body1"
-  sx={{
-    maxWidth: '600px',
-    mx: 'auto',
-    color: theme.palette.text.secondary  }}
->
+        <Typography
+          variant="body1"
+          sx={{
+            maxWidth: "600px",
+            mx: "auto",
+            color: theme.palette.text.secondary,
+          }}
+        >
           Our valuable feedback below. We are eager to hear about your
           experience and how we can make your stay even more exceptional.
         </Typography>
       </Box>
 
-      {/* Feedback Card */}
       <Box
         sx={{
           display: "flex",
@@ -77,43 +75,41 @@ const UserFeedback = () => {
           elevation={1}
           sx={{
             p: { xs: 3, md: 4 },
-            height: "220px", // FIXED height
+            height: "220px",
             display: "flex",
             flexDirection: "column",
             justifyContent: "center",
             width: "100%",
             textAlign: "center",
-            border: `1px solid ${theme.palette.secondary.main}45`, 
-    borderRadius: "8px", 
+            border: `1px solid ${theme.palette.secondary.main}45`,
+            borderRadius: "8px",
           }}
         >
           <Typography
-  variant="subtitle1"
-  component="h3"
-  sx={{
-    mb: 1,
-    color: theme.palette.secondary.main
-  }}
->
-  {currentFeedback.name}
-</Typography>
+            variant="subtitle1"
+            component="h3"
+            sx={{
+              mb: 1,
+              color: theme.palette.secondary.main,
+            }}
+          >
+            {currentFeedback.name}
+          </Typography>
 
           <Typography
-  variant="body1"
-  sx={{
-    color: theme.palette.text.secondary,
-    lineHeight: 1.6,
-    overflow: 'hidden',
-    textOverflow: 'ellipsis',
-  }}
->
-  {currentFeedback.comment}
-</Typography>
-
+            variant="body1"
+            sx={{
+              color: theme.palette.text.secondary,
+              lineHeight: 1.6,
+              overflow: "hidden",
+              textOverflow: "ellipsis",
+            }}
+          >
+            {currentFeedback.comment}
+          </Typography>
         </Paper>
       </Box>
 
-      {/* Pagination Dots */}
       <Box
         sx={{
           display: "flex",

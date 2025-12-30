@@ -38,8 +38,6 @@ const ActivitiesTypes = () => {
   const theme = useTheme();
   const location = useLocation();
   const textContentPadding = 6;
-
-  // Scroll to section if location.state.scrollTo exists
   useEffect(() => {
     if (location.state?.scrollTo) {
       const section = document.getElementById(location.state.scrollTo);

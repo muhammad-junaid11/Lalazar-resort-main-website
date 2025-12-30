@@ -63,11 +63,10 @@ const FaqSection = () => {
         sx={{
           py: 0,
           mt: { xs: 5, sm: 8, md: 15 },
-          mb: { xs: 5, md: 15 }, // different margin-top per breakpoint
+          mb: { xs: 5, md: 15 }, 
         }}
       >
         <Grid container spacing={4}>
-          {/* FAQ Column */}
           <Grid size={{ xs: 12, md: 6 }}>
             <Box
               sx={{
@@ -76,7 +75,7 @@ const FaqSection = () => {
                 justifyContent: "center",
               }}
             >
-              {/* Header */}
+              
               <Box mb={3}>
                 <Box
                   component="span"
@@ -98,7 +97,7 @@ const FaqSection = () => {
                 </Typography>
               </Box>
 
-              {/* Accordions */}
+              
               <Box>
                 {faqData.map((faq) => (
                   <Accordion
@@ -161,7 +160,7 @@ const FaqSection = () => {
             </Box>
           </Grid>
 
-          {/* Image Column */}
+          
           <Grid size={{ xs: 12, md: 6 }}>
             <Box
               sx={{

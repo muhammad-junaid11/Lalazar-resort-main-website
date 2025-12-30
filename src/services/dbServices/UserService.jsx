@@ -1,14 +1,7 @@
-// services/UserService.js
 import { doc, getDoc } from "firebase/firestore";
 import { auth, db } from "../Firebase/Firebase";
 import Cookies from "js-cookie";
 
-/**
- * Listen to auth state and resolve userName exactly like Layout logic
- * @param {Function} setUserName
- * @param {Function} setIsLoggedIn
- * @param {Function} handleLogout
- */
 export const listenAuthUser = (setUserName, setIsLoggedIn, handleLogout) => {
   return auth.onAuthStateChanged(async (user) => {
     setIsLoggedIn(!!user);
@@ -27,7 +20,7 @@ export const listenAuthUser = (setUserName, setIsLoggedIn, handleLogout) => {
           setUserName(name);
           localStorage.setItem("userName", name);
 
-          return { name, email }; // return email too if needed
+          return { name, email }; 
         } else {
           const storedName = localStorage.getItem("userName") || "User";
           setUserName(storedName);
@@ -46,11 +39,6 @@ export const listenAuthUser = (setUserName, setIsLoggedIn, handleLogout) => {
   });
 };
 
-/**
- * Fetch multiple users by their IDs
- * @param {string[]} ids
- * @returns {object} { uid: userData }
- */
 export const fetchUsersByIds = async (ids) => {
   const users = {};
   for (const uid of ids) {
@@ -61,11 +49,7 @@ export const fetchUsersByIds = async (ids) => {
   return users;
 };
 
-/**
- * Fetch a single user's email by UID
- * @param {string} uid
- * @returns {string} email
- */
+
 export const getUserEmail = async (uid) => {
   try {
     const userDoc = await getDoc(doc(db, "users", uid));

@@ -52,7 +52,6 @@ const ServicesFeatures = () => {
   const textContentPadding = 6;
   const location = useLocation();
 
-  // Scroll to section if navigated with state
   useEffect(() => {
     if (location.state?.scrollTo) {
       const section = document.getElementById(location.state.scrollTo);

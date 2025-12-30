@@ -7,7 +7,6 @@ const ProtectedRoute = ({ children }) => {
   const token = Cookies.get("userToken");
 
   if (!token) {
-    // Only set redirect when accessing protected page
     localStorage.setItem("redirectAfterLogin", location.pathname);
     return <Navigate to="/signin" replace />;
   }

@@ -3,18 +3,16 @@ import { Box, Container, Grid, Typography } from "@mui/material";
 import PhoneIcon from "@mui/icons-material/Phone";
 import EmailIcon from "@mui/icons-material/Email";
 import RoomIcon from "@mui/icons-material/Room";
-import logo from "../../assets/logo.jpg"; // your logo image
+import logo from "../../assets/logo.jpg"; 
 
 const FooterComponent = () => {
-  const currentYear = new Date().getFullYear(); // auto year
+  const currentYear = new Date().getFullYear();
 
   return (
     <Box sx={{ bgcolor: "white", pt: 10 }}>
-      {/* Top Section */}
       <Container maxWidth="lg">
         <Grid container spacing={6} justifyContent="center">
           
-          {/* Logo Section */}
           <Grid size={{ xs: 12, md: 4 }} textAlign={{ xs: "center", md: "left" }}>
             <Box
               component="img"
@@ -31,7 +29,6 @@ const FooterComponent = () => {
             />
           </Grid>
 
-          {/* Pages Section */}
           <Grid size={{ xs: 12, md: 4 }} textAlign={{ xs: "center", md: "left" }}>
             <Typography
               variant="h6"
@@ -56,7 +53,7 @@ const FooterComponent = () => {
             </Box>
           </Grid>
 
-          {/* Get In Touch Section */}
+
           <Grid size={{ xs: 12, md: 4 }} textAlign={{ xs: "center", md: "left" }}>
             <Typography
               variant="h6"
@@ -69,7 +66,6 @@ const FooterComponent = () => {
               Feel free to reach out to us for any inquiries.
             </Typography>
 
-            {/* Phone */}
             <Box
               sx={{
                 display: "flex",
@@ -86,7 +82,7 @@ const FooterComponent = () => {
               </Box>
             </Box>
 
-            {/* Emails */}
+
             <Box
               sx={{
                 display: "flex",
@@ -111,7 +107,7 @@ const FooterComponent = () => {
               <Typography>contact@lalazarfamilyresort.com</Typography>
             </Box>
 
-            {/* Location */}
+
             <Box
               sx={{
                 display: "flex",
@@ -129,7 +125,7 @@ const FooterComponent = () => {
         </Grid>
       </Container>
 
-      {/* Bottom Orange Bar */}
+
       <Box
         sx={{
           bgcolor: "secondary.main",

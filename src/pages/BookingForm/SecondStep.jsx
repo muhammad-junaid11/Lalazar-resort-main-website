@@ -18,9 +18,6 @@ import toast from "react-hot-toast";
 import { fetchCategories } from "../../services/dbServices/CategoryService";
 import { fetchAvailableRooms, fetchRoomsByIds } from "../../services/dbServices/RoomService";
 
-// ------------------------------------------------------
-// Hook to fetch rooms from service (already excludes booked rooms)
-// ------------------------------------------------------
 const useFetchRooms = (selectedCategoryId, selectedCityId, checkInDate, checkOutDate) => {
   const [rooms, setRooms] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -43,7 +40,7 @@ const useFetchRooms = (selectedCategoryId, selectedCityId, checkInDate, checkOut
           checkInDate,
           checkOutDate
         );
-        setRooms(availableRooms); // Already excludes booked rooms
+        setRooms(availableRooms);
       } catch (err) {
         console.error("Error loading rooms:", err);
         setError("Error loading rooms.");
@@ -58,9 +55,7 @@ const useFetchRooms = (selectedCategoryId, selectedCityId, checkInDate, checkOut
   return { rooms, loading, error };
 };
 
-// ------------------------------------------------------
-// Component
-// ------------------------------------------------------
+
 const SecondStep = ({
   selectedRooms,
   setSelectedRooms,
@@ -89,7 +84,7 @@ const SecondStep = ({
   const { watch, control } = methods;
   const filters = watch();
 
-  // Load categories
+
   useEffect(() => {
     const loadCategories = async () => {
       const cats = await fetchCategories();
@@ -102,7 +97,7 @@ const SecondStep = ({
     loadCategories();
   }, []);
 
-  // Fetch preselected room data when component mounts (from URL params)
+
   useEffect(() => {
     const fetchPreselectedRoomData = async () => {
       if (preselectedRoomsFetched) return;
@@ -140,7 +135,7 @@ const SecondStep = ({
     setSelectedCategoryId(filters.roomCategorySelect);
   }, [filters.roomCategorySelect]);
 
-  // Filter rooms by search
+
   const filteredRooms = useMemo(() => {
     if (!filters.search) return fetchedRooms;
     const s = filters.search.toLowerCase();

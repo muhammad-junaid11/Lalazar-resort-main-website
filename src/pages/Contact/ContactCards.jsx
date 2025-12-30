@@ -5,7 +5,7 @@ import PhoneIphoneIcon from '@mui/icons-material/PhoneIphoneOutlined';
 import LocationOnIcon from '@mui/icons-material/LocationOnOutlined';
 import { useTheme } from '@mui/material/styles';
 
-// --- Contact Data Array ---
+
 const contactData = [
   {
     id: 1,
@@ -27,10 +27,9 @@ const contactData = [
   },
 ];
 
-// --- Component Definition ---
+
 const ContactCards = () => {
   const theme = useTheme();
-  // Using theme.palette.secondary.main for the orange color
   const secondary = theme.palette.secondary.main; 
 
   return (

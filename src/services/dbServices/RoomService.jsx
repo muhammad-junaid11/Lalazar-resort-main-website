@@ -18,7 +18,6 @@ export const fetchAllRooms = async () => {
   const citiesArray = await fetchCities();
   const categoriesArray = await fetchCategories();
 
-  // Convert arrays to objects for lookup
   const cities = citiesArray.reduce((acc, city) => {
     acc[city.value] = city.label;
     return acc;
@@ -53,9 +52,6 @@ export const fetchAllRooms = async () => {
   return rooms;
 };
 
-// --------------------------------------------------
-// Fetch rooms by category slug
-// --------------------------------------------------
 export const fetchRoomsByCategorySlug = async (categorySlug) => {
   if (!categorySlug || categorySlug === "all") {
     return await fetchAllRooms();
@@ -69,9 +65,6 @@ export const fetchRoomsByCategorySlug = async (categorySlug) => {
   );
 };
 
-// --------------------------------------------------
-// ✅ FIXED: Fetch available rooms by dates
-// --------------------------------------------------
 export const fetchAvailableRooms = async (
   categoryId,
   cityId,
@@ -82,21 +75,14 @@ export const fetchAvailableRooms = async (
     return [];
   }
 
-  // Convert user dates to milliseconds
   const userCheckIn = new Date(checkInDate).getTime();
   const userCheckOut = new Date(checkOutDate).getTime();
-
-  // 1️⃣ Fetch all rooms
   const allRooms = await fetchAllRooms();
-
-  // 2️⃣ Filter rooms by category + city
   const candidateRooms = allRooms.filter(
     (room) =>
       room.categoryId === categoryId &&
       room.cityId === cityId
   );
-
-  // 3️⃣ Fetch confirmed bookings
   const bookingsSnap = await getDocs(
     query(
       collection(db, "bookings"),
@@ -104,7 +90,6 @@ export const fetchAvailableRooms = async (
     )
   );
 
-  // 4️⃣ Find booked room IDs for overlapping dates
   const bookedRoomIds = new Set();
 
   bookingsSnap.forEach(doc => {
@@ -129,15 +114,11 @@ export const fetchAvailableRooms = async (
     }
   });
 
-  // 5️⃣ Return only available rooms
   return candidateRooms.filter(
     room => !bookedRoomIds.has(room.id)
   );
 };
 
-// --------------------------------------------------
-// Fetch rooms by IDs with complete data
-// --------------------------------------------------
 export const fetchRoomsByIds = async (roomIds) => {
   if (!roomIds || roomIds.length === 0) return [];
 

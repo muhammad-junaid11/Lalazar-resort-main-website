@@ -9,7 +9,7 @@ const BookingSection = ({ images }) => {
   const theme = useTheme();
   const navigate = useNavigate();
 
-  // LOGIN STATE
+ 
   const [isLoggedIn, setIsLoggedIn] = useState(false);
 
   useEffect(() => {
@@ -19,7 +19,7 @@ const BookingSection = ({ images }) => {
     return () => unsubscribe();
   }, []);
 
-  // Image slider effect
+  
   useEffect(() => {
     const interval = setInterval(
       () => setIndex((prev) => (prev + 1) % images.length),
@@ -37,7 +37,7 @@ const BookingSection = ({ images }) => {
         overflow: "hidden",
       }}
     >
-      {/* Background images */}
+      
       {images.map((img, i) => (
         <Box
           key={i}
@@ -53,7 +53,7 @@ const BookingSection = ({ images }) => {
         />
       ))}
 
-      {/* Overlay */}
+      
       <Box
         sx={{
           position: "absolute",
@@ -62,7 +62,7 @@ const BookingSection = ({ images }) => {
         }}
       />
 
-      {/* Content */}
+     
       <Box
         sx={{
           position: "relative",

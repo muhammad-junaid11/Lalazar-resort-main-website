@@ -39,7 +39,7 @@ const getFieldSx = (fieldName) => ({
 
 useEffect(() => {
   const loadCities = async () => {
-    const cities = await fetchCities(); // service handles Firestore
+    const cities = await fetchCities(); 
     setCityOptions(cities);
   };
   loadCities();

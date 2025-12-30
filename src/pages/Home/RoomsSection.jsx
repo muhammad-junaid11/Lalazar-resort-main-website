@@ -89,9 +89,9 @@ const RoomCard = ({ name, imageSrc, onClick }) => (
     padding: '10px 15px',
     fontSize: '0.8rem',
     textDecoration: 'underline',
-    alignSelf: 'flex-start', // <-- prevents full width stretch
+    alignSelf: 'flex-start',
     '&:hover': {
-      backgroundColor: (theme) => theme.palette.secondary.dark, // automatically darker variant
+      backgroundColor: (theme) => theme.palette.secondary.dark,
     },
   }}
 >
@@ -102,7 +102,7 @@ const RoomCard = ({ name, imageSrc, onClick }) => (
   </Box>
 );
 
-// --- Bottom Section (Other Activities) ---
+
 const BottomSection = ({ onClick }) => (
   <Box
     onClick={onClick}
@@ -144,7 +144,7 @@ const BottomSection = ({ onClick }) => (
   </Box>
 );
 
-// --- Contact Banner ---
+
 const ContactBanner = ({ onClick }) => {
   return (
     <Box
@@ -157,7 +157,6 @@ const ContactBanner = ({ onClick }) => {
         borderRadius: '4px',
       }}
     >
-      {/* Darker default background */}
       <RoomImage src={contactBg} alt="Contact" height="100%" borderRadius="0" />
       <Box
         sx={{
@@ -230,7 +229,7 @@ const ContactBanner = ({ onClick }) => {
   );
 };
 
-// --- Main Component ---
+
 const RoomsSection = () => {
   const theme = useTheme();
   const navigate = useNavigate();
